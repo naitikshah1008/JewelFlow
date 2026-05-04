@@ -89,3 +89,9 @@ temp/
 # =========================
 generated/
 out/
+
+# =========================
+# Postman / API Client Local Files
+# =========================
+.postman/
+.postman
