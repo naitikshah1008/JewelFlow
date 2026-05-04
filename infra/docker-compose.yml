@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: jewelflow-postgres
+    environment:
+      POSTGRES_DB: jewelflow
+      POSTGRES_USER: jewelflow_user
+      POSTGRES_PASSWORD: jewelflow_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - jewelflow_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  jewelflow_postgres_data:
