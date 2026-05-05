@@ -28,10 +28,10 @@ public class PricingService {
             throw new IllegalArgumentException("Purity is required");
         }
         return switch (purity.toUpperCase()) {
-            case "24K" -> BigDecimal.valueOf(1.0000);
-            case "22K" -> BigDecimal.valueOf(0.9167);
-            case "18K" -> BigDecimal.valueOf(0.7500);
-            case "14K" -> BigDecimal.valueOf(0.5833);
+            case "24K" -> BigDecimal.valueOf(24).divide(BigDecimal.valueOf(24), 6, RoundingMode.HALF_UP);
+            case "22K" -> BigDecimal.valueOf(22).divide(BigDecimal.valueOf(24), 6, RoundingMode.HALF_UP);
+            case "18K" -> BigDecimal.valueOf(18).divide(BigDecimal.valueOf(24), 6, RoundingMode.HALF_UP);
+            case "14K" -> BigDecimal.valueOf(14).divide(BigDecimal.valueOf(24), 6, RoundingMode.HALF_UP);
             default -> throw new IllegalArgumentException("Unsupported purity: " + purity);
         };
     }
