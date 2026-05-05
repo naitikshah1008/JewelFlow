@@ -5,6 +5,7 @@ import com.jewelflow.backend.pricing.PricingResponse;
 import com.jewelflow.backend.pricing.PricingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.jewelflow.backend.exception.ResourceNotFoundException;
 
 import java.util.List;
 
@@ -44,7 +45,7 @@ public class JewelleryItemService {
     }
 
     public JewelleryItem getItemById(Long id) {
-        return repository.findById(id).orElseThrow(() -> new RuntimeException("Item not found with id: " + id));
+        return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Item not found with id: " + id));
     }
 
     public JewelleryItem updateItem(Long id, JewelleryItemRequest request) {
