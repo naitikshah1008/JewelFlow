@@ -11,44 +11,33 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class JewelleryItemController {
 
-    private final JewelleryItemRepository repository;
+    private final JewelleryItemService jewelleryItemService;
 
     @PostMapping
-    public JewelleryItem createItem(@RequestBody JewelleryItem item) {
-        return repository.save(item);
+    public JewelleryItem createItem(@RequestBody JewelleryItemRequest request) {
+        return jewelleryItemService.createItem(request);
     }
 
     @GetMapping
     public List<JewelleryItem> getAllItems() {
-        return repository.findAll();
+        return jewelleryItemService.getAllItems();
     }
 
     @GetMapping("/{id}")
     public JewelleryItem getItemById(@PathVariable Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Item not found"));
+        return jewelleryItemService.getItemById(id);
     }
 
     @PutMapping("/{id}")
-    public JewelleryItem updateItem(@PathVariable Long id, @RequestBody JewelleryItem updatedItem) {
-        JewelleryItem item = repository.findById(id).orElseThrow(() -> new RuntimeException("Item not found"));
-        item.setItemName(updatedItem.getItemName());
-        item.setCategory(updatedItem.getCategory());
-        item.setMetalType(updatedItem.getMetalType());
-        item.setPurity(updatedItem.getPurity());
-        item.setGrossWeight(updatedItem.getGrossWeight());
-        item.setNetWeight(updatedItem.getNetWeight());
-        item.setStoneWeight(updatedItem.getStoneWeight());
-        item.setStonePrice(updatedItem.getStonePrice());
-        item.setMakingCharges(updatedItem.getMakingCharges());
-        item.setPurchaseCost(updatedItem.getPurchaseCost());
-        item.setSellingPrice(updatedItem.getSellingPrice());
-        item.setStatus(updatedItem.getStatus());
-        return repository.save(item);
+    public JewelleryItem updateItem(
+            @PathVariable Long id,
+            @RequestBody JewelleryItemRequest request
+    ) {
+        return jewelleryItemService.updateItem(id, request);
     }
 
     @DeleteMapping("/{id}")
     public void deleteItem(@PathVariable Long id) {
-        repository.deleteById(id);
+        jewelleryItemService.deleteItem(id);
     }
 }

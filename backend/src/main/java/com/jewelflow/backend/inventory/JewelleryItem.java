@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class JewelleryItem {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,11 +25,30 @@ public class JewelleryItem {
     private BigDecimal grossWeight;
     private BigDecimal netWeight;
     private BigDecimal stoneWeight;
+    private BigDecimal goldRatePerGram;
     private BigDecimal stonePrice;
     private BigDecimal makingCharges;
+    private BigDecimal taxPercentage;
+    private BigDecimal discount;
+    private BigDecimal goldValue;
+    private BigDecimal taxAmount;
     private BigDecimal purchaseCost;
     private BigDecimal sellingPrice;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+        if (this.status == null || this.status.isBlank()) {
+            this.status = "AVAILABLE";
+        }
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }
