@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 @Builder
 public class PricingResponse {
     private BigDecimal purityFactor;
+    private BigDecimal goldRatePerGram;
     private BigDecimal goldValue;
     private BigDecimal stonePrice;
     private BigDecimal makingCharges;

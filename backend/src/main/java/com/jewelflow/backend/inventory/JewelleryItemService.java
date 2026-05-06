@@ -26,7 +26,7 @@ public class JewelleryItemService {
                 .grossWeight(request.getGrossWeight())
                 .netWeight(request.getNetWeight())
                 .stoneWeight(request.getStoneWeight())
-                .goldRatePerGram(request.getGoldRatePerGram())
+                .goldRatePerGram(pricing.getGoldRatePerGram())
                 .stonePrice(request.getStonePrice())
                 .makingCharges(request.getMakingCharges())
                 .taxPercentage(request.getTaxPercentage())
@@ -58,7 +58,7 @@ public class JewelleryItemService {
         item.setGrossWeight(request.getGrossWeight());
         item.setNetWeight(request.getNetWeight());
         item.setStoneWeight(request.getStoneWeight());
-        item.setGoldRatePerGram(request.getGoldRatePerGram());
+        item.setGoldRatePerGram(pricing.getGoldRatePerGram());
         item.setStonePrice(request.getStonePrice());
         item.setMakingCharges(request.getMakingCharges());
         item.setTaxPercentage(request.getTaxPercentage());
@@ -79,6 +79,7 @@ public class JewelleryItemService {
     private PricingResponse calculatePricing(JewelleryItemRequest request) {
         PricingRequest pricingRequest = new PricingRequest();
         pricingRequest.setNetWeight(request.getNetWeight());
+        pricingRequest.setMetalType(request.getMetalType());
         pricingRequest.setPurity(request.getPurity());
         pricingRequest.setGoldRatePerGram(request.getGoldRatePerGram());
         pricingRequest.setStonePrice(request.getStonePrice());

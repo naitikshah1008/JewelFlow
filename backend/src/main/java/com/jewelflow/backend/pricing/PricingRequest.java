@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 public class PricingRequest {
 
     private BigDecimal netWeight;
+    private String metalType;
     private String purity;
     private BigDecimal goldRatePerGram;
     private BigDecimal stonePrice;
