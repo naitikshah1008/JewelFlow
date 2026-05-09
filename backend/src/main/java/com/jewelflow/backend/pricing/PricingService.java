@@ -30,7 +30,9 @@ public class PricingService {
         BigDecimal taxPercentage = defaultValue(request.getTaxPercentage());
         BigDecimal discount = defaultValue(request.getDiscount());
         BigDecimal goldValue = netWeight.multiply(goldRatePerGram).multiply(purityFactor).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal subtotal = goldValue.add(stonePrice).add(makingCharges).subtract(discount).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal preTaxSubtotal = goldValue.add(stonePrice).add(makingCharges).setScale(2, RoundingMode.HALF_UP);
+        ensureDiscountDoesNotExceedSubtotal(discount, preTaxSubtotal);
+        BigDecimal subtotal = preTaxSubtotal.subtract(discount).setScale(2, RoundingMode.HALF_UP);
         BigDecimal taxAmount = subtotal.multiply(taxPercentage).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
         BigDecimal finalPrice = subtotal.add(taxAmount).setScale(2, RoundingMode.HALF_UP);
         return PricingResponse.builder()
@@ -56,6 +58,14 @@ public class PricingService {
                 : MetalType.from(request.getMetalType());
 
         return goldRateService.getLatestRatePerGram(metalType.name(), purity.getCode());
+    }
+
+    private void ensureDiscountDoesNotExceedSubtotal(BigDecimal discount, BigDecimal preTaxSubtotal) {
+        if (discount.compareTo(preTaxSubtotal) > 0) {
+            throw new IllegalArgumentException(
+                    "Discount cannot exceed subtotal before tax: " + preTaxSubtotal
+            );
+        }
     }
 
     private BigDecimal defaultValue(BigDecimal value) {

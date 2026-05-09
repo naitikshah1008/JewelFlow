@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.jewelflow.backend.exception.ResourceNotFoundException;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -20,6 +21,7 @@ public class JewelleryItemService {
     private final PricingService pricingService;
 
     public JewelleryItem createItem(JewelleryItemRequest request) {
+        validateWeightRules(request);
         MetalType metalType = MetalType.from(request.getMetalType());
         Purity purity = Purity.from(request.getPurity());
         ItemStatus status = ItemStatus.from(request.getStatus());
@@ -56,6 +58,7 @@ public class JewelleryItemService {
 
     public JewelleryItem updateItem(Long id, JewelleryItemRequest request) {
         JewelleryItem item = getItemById(id);
+        validateWeightRules(request);
         MetalType metalType = MetalType.from(request.getMetalType());
         Purity purity = Purity.from(request.getPurity());
         ItemStatus status = ItemStatus.from(request.getStatus());
@@ -83,6 +86,25 @@ public class JewelleryItemService {
     public void deleteItem(Long id) {
         JewelleryItem item = getItemById(id);
         repository.delete(item);
+    }
+
+    private void validateWeightRules(JewelleryItemRequest request) {
+        BigDecimal grossWeight = request.getGrossWeight();
+        BigDecimal netWeight = request.getNetWeight();
+        BigDecimal stoneWeight = request.getStoneWeight();
+
+        if (grossWeight == null || netWeight == null || stoneWeight == null) {
+            return;
+        }
+        if (netWeight.compareTo(grossWeight) > 0) {
+            throw new IllegalArgumentException("Net weight cannot exceed gross weight");
+        }
+        if (stoneWeight.compareTo(grossWeight) > 0) {
+            throw new IllegalArgumentException("Stone weight cannot exceed gross weight");
+        }
+        if (netWeight.add(stoneWeight).compareTo(grossWeight) > 0) {
+            throw new IllegalArgumentException("Net weight plus stone weight cannot exceed gross weight");
+        }
     }
 
     private PricingResponse calculatePricing(JewelleryItemRequest request) {

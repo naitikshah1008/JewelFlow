@@ -46,8 +46,10 @@ JewelFlow is a Spring Boot backend for a jewelry inventory, customer, pricing, a
 - Inventory CRUD APIs for jewelry items.
 - Automatic item pricing during inventory create/update.
 - Inventory create/update request validation for required fields and non-negative/positive numeric values.
+- Inventory create/update cross-field validation for impossible weight combinations.
 - Standalone pricing calculator API using `BigDecimal`.
 - Pricing calculator request validation for required fields and non-negative/positive numeric values.
+- Pricing rejects discounts that exceed the subtotal before tax.
 - Purity factor calculation for `24K`, `22K`, `18K`, and `14K`.
 - Gold rate management APIs for creating and reading rate history.
 - Latest gold rate lookup by `metalType` and `purity`.
@@ -70,7 +72,7 @@ JewelFlow is a Spring Boot backend for a jewelry inventory, customer, pricing, a
 - Shared `ResourceNotFoundException`.
 - Shared `GlobalExceptionHandler` for 404, bad request, and validation responses.
 - Local security configuration permits `/api/**` without authentication.
-- Basic Spring Boot context test.
+- Basic Spring Boot context test and focused validation unit tests.
 
 ## Current API Endpoints
 
@@ -193,7 +195,7 @@ Latest result:
 
 ```text
 BUILD SUCCESS
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 ## How to Test in Postman
@@ -367,7 +369,7 @@ GET http://localhost:8080/api/dashboard/summary
 ```
 
 ## Known Issues
-- Inventory and pricing validation is field-level only; cross-field rules such as `netWeight <= grossWeight` are not implemented yet.
+- Inventory and pricing validation covers required fields, numeric ranges, controlled enum values, item weight relationships, and discount ceilings.
 - `goldRatePerGram` remains optional by design because pricing can fall back to the latest saved gold rate for `metalType` and `purity`.
 - `status`, `purity`, `metalType`, `paymentStatus`, and `paymentMethod` are stored as strings in the database, but application inputs are normalized through controlled enums.
 - Inventory and customer delete endpoints perform hard deletes.
@@ -410,10 +412,9 @@ Maven wrapper files should remain committed:
 - `backend/.mvn/wrapper/maven-wrapper.jar`, if present
 
 ## Next Recommended Steps
-1. Add cross-field validation for jewelry-specific rules such as `netWeight <= grossWeight` and discount not exceeding pre-tax subtotal.
-2. Add focused service/controller tests for pricing, inventory creation, customer duplicate phone handling, sales creation, invoice creation, and dashboard summaries.
-3. Improve sale and invoice numbering so it is safe and predictable under concurrent requests.
-4. Add real authentication and role-based authorization for owner/admin, salesperson, and inventory manager workflows.
+1. Add focused service/controller tests for customer duplicate phone handling, sales creation, invoice creation, and dashboard summaries.
+2. Improve sale and invoice numbering so it is safe and predictable under concurrent requests.
+3. Add real authentication and role-based authorization for owner/admin, salesperson, and inventory manager workflows.
 
 Recommended commit message for the latest validation/status update:
 
