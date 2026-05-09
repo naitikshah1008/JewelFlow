@@ -21,13 +21,24 @@ public class DashboardSummaryResponse {
     private BigDecimal reservedInventoryValue;
 
     private long totalSalesCount;
+    private long totalInvoicesCount;
+    private long totalBillingCount;
     private BigDecimal totalRevenue;
+    private BigDecimal totalSalesRevenue;
+    private BigDecimal totalInvoiceRevenue;
 
     private long todaySalesCount;
+    private long todayInvoicesCount;
     private BigDecimal todayRevenue;
+    private BigDecimal todaySalesRevenue;
+    private BigDecimal todayInvoiceRevenue;
 
     private long monthlySalesCount;
+    private long monthlyInvoicesCount;
     private BigDecimal monthlyRevenue;
+    private BigDecimal monthlySalesRevenue;
+    private BigDecimal monthlyInvoiceRevenue;
 
     private List<RecentSaleResponse> recentSales;
+    private List<RecentInvoiceResponse> recentInvoices;
 }
