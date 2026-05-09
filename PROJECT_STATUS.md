@@ -29,6 +29,16 @@ JewelFlow is a Spring Boot backend for a jewelry inventory, customer, pricing, a
 - `backend/src/test/java/com/jewelflow/backend`: Spring Boot context test.
 - `infra`: Docker Compose file for local PostgreSQL.
 
+## Newly Added Files
+- `PROJECT_STATUS.md`: current project status, API inventory, setup notes, testing flow, known issues, and next steps.
+- `.gitignore`: updated to ignore local `postman/` workspace files in addition to `.postman/`.
+- `backend/src/main/java/com/jewelflow/backend/invoice/Invoice.java`: invoice/order JPA entity backed by the `invoices` table.
+- `backend/src/main/java/com/jewelflow/backend/invoice/InvoiceRequest.java`: invoice/order creation request DTO with validation annotations.
+- `backend/src/main/java/com/jewelflow/backend/invoice/InvoiceResponse.java`: invoice/order response DTO.
+- `backend/src/main/java/com/jewelflow/backend/invoice/InvoiceRepository.java`: Spring Data JPA repository for invoices.
+- `backend/src/main/java/com/jewelflow/backend/invoice/InvoiceService.java`: invoice/order business logic.
+- `backend/src/main/java/com/jewelflow/backend/invoice/InvoiceController.java`: REST controller for `/api/invoices`.
+
 ## Completed Features
 - Spring Boot backend project with Maven Wrapper.
 - PostgreSQL configuration for local development.
@@ -117,6 +127,15 @@ Important fields: `id`, `metalType`, `purity`, `ratePerGram`, `rateDate`, `sourc
 - `DashboardSummaryResponse`: dashboard totals and recent sales.
 - `RecentSaleResponse`: compact sale summary for dashboard.
 
+## Database / Model Changes
+- Existing JPA entities map to `jewellery_items`, `customers`, `sales`, `gold_rates`, and `invoices`.
+- `Invoice` uses `@Table(name = "invoices")`.
+- `Invoice.invoiceNumber` is unique and required.
+- `Invoice.customerId`, `Invoice.itemId`, and `Invoice.quantity` are required columns.
+- With `spring.jpa.hibernate.ddl-auto=update`, Hibernate creates/updates the `invoices` table automatically in local development.
+- Invoice records snapshot customer details, item details, weights, pricing values, tax, discount, payment values, and final amount at invoice creation time.
+- There are no explicit foreign-key relationships yet between `Invoice` and `Customer` / `JewelleryItem`; ids and snapshot fields are stored directly.
+
 ## Configuration Notes
 - Local server port is `8080`.
 - `application.properties` sets `spring.application.name=backend`.
@@ -157,6 +176,21 @@ On Windows, use:
 
 ```bash
 backend\mvnw.cmd test
+```
+
+## Commands / Tests Run
+Latest verification command:
+
+```bash
+cd backend
+./mvnw test
+```
+
+Latest result:
+
+```text
+BUILD SUCCESS
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 ## How to Test in Postman
@@ -263,13 +297,67 @@ POST http://localhost:8080/api/invoices
 }
 ```
 
+Supported invoice `paymentStatus` values:
+
+```text
+PAID, UNPAID, PARTIAL
+```
+
+Supported invoice `paymentMethod` values:
+
+```text
+CASH, CARD, UPI, BANK_TRANSFER, OTHER
+```
+
+Example invoice response shape:
+
+```json
+{
+  "id": 1,
+  "invoiceNumber": "JF-ORDER-000001",
+  "customerId": 1,
+  "customerName": "Rahul Mehta",
+  "customerPhoneNumber": "9876543210",
+  "itemId": 1,
+  "itemName": "Gold Ring",
+  "category": "Ring",
+  "metalType": "Gold",
+  "purity": "22K",
+  "quantity": 1,
+  "grossWeight": 10.50,
+  "netWeight": 9.80,
+  "stoneWeight": 0.70,
+  "goldRatePerGram": 6500,
+  "goldValue": 58391.67,
+  "stonePrice": 1500.00,
+  "makingCharges": 2500.00,
+  "subtotal": 61391.67,
+  "taxPercentage": 3,
+  "taxAmount": 1841.75,
+  "discount": 1000,
+  "unitFinalAmount": 63233.42,
+  "finalAmount": 63233.42,
+  "orderStatus": "ISSUED",
+  "paymentStatus": "PAID",
+  "paymentMethod": "CASH",
+  "notes": "Invoice created from Postman",
+  "invoiceDate": "2026-05-08T..."
+}
+```
+
 6. List invoices/orders:
 
 ```http
 GET http://localhost:8080/api/invoices
 ```
 
-7. Check the dashboard:
+7. Get one invoice/order:
+
+```http
+GET http://localhost:8080/api/invoices/1
+```
+
+8. Check the dashboard:
 
 ```http
 GET http://localhost:8080/api/dashboard/summary
@@ -292,8 +380,7 @@ GET http://localhost:8080/api/dashboard/summary
 - No frontend module exists in the repository.
 - No pagination, sorting, or search filters exist for list endpoints.
 - Dashboard metrics use server-local date boundaries.
-- Current Git status includes untracked local Postman workspace files under `postman/`.
-- `postman/` is not currently ignored by `.gitignore`; only `.postman/` and `.postman` are ignored.
+- Local Postman workspace files under `postman/` are ignored by `.gitignore`; commit only intentionally exported and sanitized API collections.
 
 ## Git and .gitignore Notes
 Do not commit local, generated, or sensitive files such as:
@@ -312,7 +399,7 @@ Do not commit local, generated, or sensitive files such as:
 - `temp/`
 - generated build artifacts such as `*.class`, `*.jar`, `*.war`, `*.ear`
 - local Docker overrides such as `docker-compose.override.yml`
-- local Postman workspace files such as `.postman/`, `.postman`, and the current untracked `postman/` workspace files unless intentionally exported and sanitized
+- local Postman workspace files such as `.postman/`, `.postman`, and `postman/` unless intentionally exported and sanitized
 
 Maven wrapper files should remain committed:
 
@@ -323,6 +410,12 @@ Maven wrapper files should remain committed:
 ## Next Recommended Steps
 1. Add validation to `JewelleryItemRequest` and `PricingRequest`, including required fields and positive numeric checks.
 2. Replace string constants for item status, payment status, payment method, metal type, and purity with enums or controlled validation.
-3. Add focused service/controller tests for pricing, inventory creation, customer duplicate phone handling, sales creation, and dashboard summaries.
+3. Add focused service/controller tests for pricing, inventory creation, customer duplicate phone handling, sales creation, invoice creation, and dashboard summaries.
 4. Improve sale and invoice numbering so it is safe and predictable under concurrent requests.
 5. Add real authentication and role-based authorization for owner/admin, salesperson, and inventory manager workflows.
+
+Recommended commit message for the latest invoice/status update:
+
+```text
+Add invoice order management APIs
+```
