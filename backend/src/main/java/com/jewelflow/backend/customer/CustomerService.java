@@ -28,7 +28,11 @@ public class CustomerService {
     }
 
     public List<Customer> getAllCustomers() {
-        return customerRepository.findAll();
+        return getAllCustomers(null);
+    }
+
+    public List<Customer> getAllCustomers(String keyword) {
+        return customerRepository.searchCustomers(normalizeKeyword(keyword));
     }
 
     public Customer getCustomerById(Long id) {
@@ -64,5 +68,9 @@ public class CustomerService {
                         throw new IllegalArgumentException("Customer already exists with phone number: " + phoneNumber);
                     }
                 });
+    }
+
+    private String normalizeKeyword(String keyword) {
+        return keyword == null || keyword.isBlank() ? null : "%" + keyword.trim().toLowerCase() + "%";
     }
 }

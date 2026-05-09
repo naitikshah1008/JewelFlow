@@ -20,8 +20,13 @@ public class InvoiceController {
     }
 
     @GetMapping
-    public List<InvoiceResponse> getAllInvoices() {
-        return invoiceService.getAllInvoices();
+    public List<InvoiceResponse> getAllInvoices(
+            @RequestParam(required = false) String customerName,
+            @RequestParam(required = false) String paymentStatus,
+            @RequestParam(required = false) String orderStatus,
+            @RequestParam(required = false) String keyword
+    ) {
+        return invoiceService.getAllInvoices(customerName, paymentStatus, orderStatus, keyword);
     }
 
     @GetMapping("/{id}")

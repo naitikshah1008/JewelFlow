@@ -20,8 +20,14 @@ public class JewelleryItemController {
     }
 
     @GetMapping
-    public List<JewelleryItem> getAllItems() {
-        return jewelleryItemService.getAllItems();
+    public List<JewelleryItem> getAllItems(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String metalType,
+            @RequestParam(required = false) String purity,
+            @RequestParam(required = false) String keyword
+    ) {
+        return jewelleryItemService.getAllItems(status, category, metalType, purity, keyword);
     }
 
     @GetMapping("/{id}")

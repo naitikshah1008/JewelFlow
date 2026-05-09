@@ -49,7 +49,22 @@ public class JewelleryItemService {
     }
 
     public List<JewelleryItem> getAllItems() {
-        return repository.findAll();
+        return getAllItems(null, null, null, null, null);
+    }
+
+    public List<JewelleryItem> getAllItems(String status, String category, String metalType, String purity, String keyword) {
+        String normalizedStatus = normalizeStatusFilter(status);
+        String normalizedCategory = normalizeTextFilter(category);
+        String normalizedMetalType = normalizeMetalTypeFilter(metalType);
+        String normalizedPurity = normalizePurityFilter(purity);
+        String normalizedKeyword = normalizeKeyword(keyword);
+        return repository.searchItems(
+                normalizedStatus,
+                normalizedCategory,
+                normalizedMetalType,
+                normalizedPurity,
+                normalizedKeyword
+        );
     }
 
     public JewelleryItem getItemById(Long id) {
@@ -118,5 +133,29 @@ public class JewelleryItemService {
         pricingRequest.setTaxPercentage(request.getTaxPercentage());
         pricingRequest.setDiscount(request.getDiscount());
         return pricingService.calculatePrice(pricingRequest);
+    }
+
+    private String normalizeStatusFilter(String status) {
+        return isBlank(status) ? null : ItemStatus.from(status).name();
+    }
+
+    private String normalizeMetalTypeFilter(String metalType) {
+        return isBlank(metalType) ? null : MetalType.from(metalType).name();
+    }
+
+    private String normalizePurityFilter(String purity) {
+        return isBlank(purity) ? null : Purity.from(purity).getCode();
+    }
+
+    private String normalizeTextFilter(String value) {
+        return isBlank(value) ? null : value.trim().toUpperCase();
+    }
+
+    private String normalizeKeyword(String keyword) {
+        return isBlank(keyword) ? null : "%" + keyword.trim().toLowerCase() + "%";
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

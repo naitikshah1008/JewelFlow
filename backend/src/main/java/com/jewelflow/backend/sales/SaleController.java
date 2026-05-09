@@ -20,8 +20,12 @@ public class SaleController {
     }
 
     @GetMapping
-    public List<SaleResponse> getAllSales() {
-        return saleService.getAllSales();
+    public List<SaleResponse> getAllSales(
+            @RequestParam(required = false) String customerName,
+            @RequestParam(required = false) String paymentStatus,
+            @RequestParam(required = false) String keyword
+    ) {
+        return saleService.getAllSales(customerName, paymentStatus, keyword);
     }
 
     @GetMapping("/{id}")

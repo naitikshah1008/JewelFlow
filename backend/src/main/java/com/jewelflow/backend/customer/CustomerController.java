@@ -20,8 +20,8 @@ public class CustomerController {
     }
 
     @GetMapping
-    public List<Customer> getAllCustomers() {
-        return customerService.getAllCustomers();
+    public List<Customer> getAllCustomers(@RequestParam(required = false) String keyword) {
+        return customerService.getAllCustomers(keyword);
     }
 
     @GetMapping("/{id}")
