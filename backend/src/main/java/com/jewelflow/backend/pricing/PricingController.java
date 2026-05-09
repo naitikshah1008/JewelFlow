@@ -1,5 +1,6 @@
 package com.jewelflow.backend.pricing;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,7 +13,7 @@ public class PricingController {
     private final PricingService pricingService;
 
     @PostMapping("/calculate")
-    public PricingResponse calculatePrice(@RequestBody PricingRequest request) {
+    public PricingResponse calculatePrice(@Valid @RequestBody PricingRequest request) {
         return pricingService.calculatePrice(request);
     }
 }

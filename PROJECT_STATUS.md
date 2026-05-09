@@ -45,7 +45,9 @@ JewelFlow is a Spring Boot backend for a jewelry inventory, customer, pricing, a
 - Docker Compose setup for PostgreSQL 16.
 - Inventory CRUD APIs for jewelry items.
 - Automatic item pricing during inventory create/update.
+- Inventory create/update request validation for required fields and non-negative/positive numeric values.
 - Standalone pricing calculator API using `BigDecimal`.
+- Pricing calculator request validation for required fields and non-negative/positive numeric values.
 - Purity factor calculation for `24K`, `22K`, `18K`, and `14K`.
 - Gold rate management APIs for creating and reading rate history.
 - Latest gold rate lookup by `metalType` and `purity`.
@@ -114,8 +116,8 @@ Important fields: `id`, `invoiceNumber`, `customerId`, `customerName`, `customer
 Important fields: `id`, `metalType`, `purity`, `ratePerGram`, `rateDate`, `source`, `notes`, `createdAt`, `updatedAt`.
 
 ### DTOs / Response Models
-- `JewelleryItemRequest`: inventory create/update input.
-- `PricingRequest`: pricing calculator input.
+- `JewelleryItemRequest`: inventory create/update input with validation annotations.
+- `PricingRequest`: pricing calculator input with validation annotations.
 - `PricingResponse`: calculated pricing output.
 - `CustomerRequest`: customer create/update input with validation annotations.
 - `SaleRequest`: sale creation input with validation annotations.
@@ -364,9 +366,8 @@ GET http://localhost:8080/api/dashboard/summary
 ```
 
 ## Known Issues
-- `JewelleryItemRequest` has no Bean Validation annotations.
-- `PricingRequest` has no Bean Validation annotations.
-- Inventory and pricing currently allow null or negative numeric values in several fields.
+- Inventory and pricing validation is field-level only; cross-field rules such as `netWeight <= grossWeight` are not implemented yet.
+- `goldRatePerGram` remains optional by design because pricing can fall back to the latest saved gold rate for `metalType` and `purity`.
 - `status`, `purity`, `metalType`, `paymentStatus`, and `paymentMethod` are strings instead of enums or controlled reference data.
 - Inventory and customer delete endpoints perform hard deletes.
 - Sale invoice number generation is based on `saleRepository.count() + 1`, which is not safe under concurrent requests.
@@ -408,14 +409,14 @@ Maven wrapper files should remain committed:
 - `backend/.mvn/wrapper/maven-wrapper.jar`, if present
 
 ## Next Recommended Steps
-1. Add validation to `JewelleryItemRequest` and `PricingRequest`, including required fields and positive numeric checks.
-2. Replace string constants for item status, payment status, payment method, metal type, and purity with enums or controlled validation.
+1. Replace string constants for item status, payment status, payment method, metal type, and purity with enums or controlled validation.
+2. Add cross-field validation for jewelry-specific rules such as `netWeight <= grossWeight` and discount not exceeding pre-tax subtotal.
 3. Add focused service/controller tests for pricing, inventory creation, customer duplicate phone handling, sales creation, invoice creation, and dashboard summaries.
 4. Improve sale and invoice numbering so it is safe and predictable under concurrent requests.
 5. Add real authentication and role-based authorization for owner/admin, salesperson, and inventory manager workflows.
 
-Recommended commit message for the latest invoice/status update:
+Recommended commit message for the latest validation/status update:
 
 ```text
-Add invoice order management APIs
+Add inventory and pricing request validation
 ```

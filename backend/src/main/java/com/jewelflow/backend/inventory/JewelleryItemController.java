@@ -1,5 +1,6 @@
 package com.jewelflow.backend.inventory;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,7 +15,7 @@ public class JewelleryItemController {
     private final JewelleryItemService jewelleryItemService;
 
     @PostMapping
-    public JewelleryItem createItem(@RequestBody JewelleryItemRequest request) {
+    public JewelleryItem createItem(@Valid @RequestBody JewelleryItemRequest request) {
         return jewelleryItemService.createItem(request);
     }
 
@@ -31,7 +32,7 @@ public class JewelleryItemController {
     @PutMapping("/{id}")
     public JewelleryItem updateItem(
             @PathVariable Long id,
-            @RequestBody JewelleryItemRequest request
+            @Valid @RequestBody JewelleryItemRequest request
     ) {
         return jewelleryItemService.updateItem(id, request);
     }
