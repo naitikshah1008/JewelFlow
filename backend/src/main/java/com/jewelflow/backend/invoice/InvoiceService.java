@@ -19,11 +19,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class InvoiceService {
+
+    private static final DateTimeFormatter INVOICE_NUMBER_TIMESTAMP_FORMAT =
+            DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
 
     private final InvoiceRepository invoiceRepository;
     private final CustomerService customerService;
@@ -82,7 +89,20 @@ public class InvoiceService {
     }
 
     public List<InvoiceResponse> getAllInvoices() {
-        return invoiceRepository.findAllByOrderByInvoiceDateDesc()
+        return getAllInvoices(null, null, null, null);
+    }
+
+    public List<InvoiceResponse> getAllInvoices(String customerName, String paymentStatus, String orderStatus, String keyword) {
+        String normalizedPaymentStatus = normalizePaymentStatusFilter(paymentStatus);
+        String normalizedOrderStatus = normalizeOrderStatusFilter(orderStatus);
+        String normalizedCustomerName = normalizeLikeFilter(customerName);
+        String normalizedKeyword = normalizeLikeFilter(keyword);
+        return invoiceRepository.searchInvoices(
+                        normalizedCustomerName,
+                        normalizedPaymentStatus,
+                        normalizedOrderStatus,
+                        normalizedKeyword
+                )
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -133,23 +153,42 @@ public class InvoiceService {
     }
 
     private String generateInvoiceNumber() {
-        long nextInvoiceNumber = invoiceRepository.count() + 1;
-        String invoiceNumber = formatInvoiceNumber(nextInvoiceNumber);
+        String invoiceNumber = formatInvoiceNumber();
 
         while (invoiceRepository.existsByInvoiceNumber(invoiceNumber)) {
-            nextInvoiceNumber++;
-            invoiceNumber = formatInvoiceNumber(nextInvoiceNumber);
+            invoiceNumber = formatInvoiceNumber();
         }
 
         return invoiceNumber;
     }
 
-    private String formatInvoiceNumber(long invoiceNumber) {
-        return String.format("JF-ORDER-%06d", invoiceNumber);
+    private String formatInvoiceNumber() {
+        String timestamp = LocalDateTime.now().format(INVOICE_NUMBER_TIMESTAMP_FORMAT);
+        String suffix = UUID.randomUUID().toString()
+                .replace("-", "")
+                .substring(0, 6)
+                .toUpperCase(Locale.ROOT);
+        return "JF-ORDER-" + timestamp + "-" + suffix;
     }
 
     private BigDecimal defaultValue(BigDecimal value) {
         return value == null ? BigDecimal.ZERO : value;
+    }
+
+    private String normalizePaymentStatusFilter(String paymentStatus) {
+        return isBlank(paymentStatus) ? null : PaymentStatus.from(paymentStatus).name();
+    }
+
+    private String normalizeOrderStatusFilter(String orderStatus) {
+        return isBlank(orderStatus) ? null : OrderStatus.from(orderStatus).name();
+    }
+
+    private String normalizeLikeFilter(String value) {
+        return isBlank(value) ? null : "%" + value.trim().toLowerCase() + "%";
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     private InvoiceResponse toResponse(Invoice invoice) {

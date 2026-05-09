@@ -13,11 +13,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class SaleService {
+
+    private static final DateTimeFormatter SALE_NUMBER_TIMESTAMP_FORMAT =
+            DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
 
     private final SaleRepository saleRepository;
     private final CustomerService customerService;
@@ -69,7 +76,14 @@ public class SaleService {
     }
 
     public List<SaleResponse> getAllSales() {
-        return saleRepository.findAll()
+        return getAllSales(null, null, null);
+    }
+
+    public List<SaleResponse> getAllSales(String customerName, String paymentStatus, String keyword) {
+        String normalizedCustomerName = normalizeLikeFilter(customerName);
+        String normalizedPaymentStatus = normalizePaymentStatusFilter(paymentStatus);
+        String normalizedKeyword = normalizeLikeFilter(keyword);
+        return saleRepository.searchSales(normalizedCustomerName, normalizedPaymentStatus, normalizedKeyword)
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -94,19 +108,34 @@ public class SaleService {
     }
 
     private String generateInvoiceNumber() {
-        long nextInvoiceNumber = saleRepository.count() + 1;
-        String invoiceNumber = formatInvoiceNumber(nextInvoiceNumber);
+        String invoiceNumber = formatInvoiceNumber();
 
         while (saleRepository.existsByInvoiceNumber(invoiceNumber)) {
-            nextInvoiceNumber++;
-            invoiceNumber = formatInvoiceNumber(nextInvoiceNumber);
+            invoiceNumber = formatInvoiceNumber();
         }
 
         return invoiceNumber;
     }
 
-    private String formatInvoiceNumber(long invoiceNumber) {
-        return String.format("JF-INV-%06d", invoiceNumber);
+    private String formatInvoiceNumber() {
+        String timestamp = LocalDateTime.now().format(SALE_NUMBER_TIMESTAMP_FORMAT);
+        String suffix = UUID.randomUUID().toString()
+                .replace("-", "")
+                .substring(0, 6)
+                .toUpperCase(Locale.ROOT);
+        return "JF-INV-" + timestamp + "-" + suffix;
+    }
+
+    private String normalizePaymentStatusFilter(String paymentStatus) {
+        return isBlank(paymentStatus) ? null : PaymentStatus.from(paymentStatus).name();
+    }
+
+    private String normalizeLikeFilter(String value) {
+        return isBlank(value) ? null : "%" + value.trim().toLowerCase() + "%";
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     private SaleResponse toResponse(Sale sale) {
