@@ -1,5 +1,8 @@
 package com.jewelflow.backend.inventory;
 
+import com.jewelflow.backend.common.ItemStatus;
+import com.jewelflow.backend.common.MetalType;
+import com.jewelflow.backend.common.Purity;
 import com.jewelflow.backend.pricing.PricingRequest;
 import com.jewelflow.backend.pricing.PricingResponse;
 import com.jewelflow.backend.pricing.PricingService;
@@ -17,12 +20,15 @@ public class JewelleryItemService {
     private final PricingService pricingService;
 
     public JewelleryItem createItem(JewelleryItemRequest request) {
+        MetalType metalType = MetalType.from(request.getMetalType());
+        Purity purity = Purity.from(request.getPurity());
+        ItemStatus status = ItemStatus.from(request.getStatus());
         PricingResponse pricing = calculatePricing(request);
         JewelleryItem item = JewelleryItem.builder()
                 .itemName(request.getItemName())
                 .category(request.getCategory())
-                .metalType(request.getMetalType())
-                .purity(request.getPurity())
+                .metalType(metalType.name())
+                .purity(purity.getCode())
                 .grossWeight(request.getGrossWeight())
                 .netWeight(request.getNetWeight())
                 .stoneWeight(request.getStoneWeight())
@@ -35,7 +41,7 @@ public class JewelleryItemService {
                 .taxAmount(pricing.getTaxAmount())
                 .purchaseCost(request.getPurchaseCost())
                 .sellingPrice(pricing.getFinalPrice())
-                .status(request.getStatus())
+                .status(status.name())
                 .build();
         return repository.save(item);
     }
@@ -50,11 +56,14 @@ public class JewelleryItemService {
 
     public JewelleryItem updateItem(Long id, JewelleryItemRequest request) {
         JewelleryItem item = getItemById(id);
+        MetalType metalType = MetalType.from(request.getMetalType());
+        Purity purity = Purity.from(request.getPurity());
+        ItemStatus status = ItemStatus.from(request.getStatus());
         PricingResponse pricing = calculatePricing(request);
         item.setItemName(request.getItemName());
         item.setCategory(request.getCategory());
-        item.setMetalType(request.getMetalType());
-        item.setPurity(request.getPurity());
+        item.setMetalType(metalType.name());
+        item.setPurity(purity.getCode());
         item.setGrossWeight(request.getGrossWeight());
         item.setNetWeight(request.getNetWeight());
         item.setStoneWeight(request.getStoneWeight());
@@ -67,7 +76,7 @@ public class JewelleryItemService {
         item.setTaxAmount(pricing.getTaxAmount());
         item.setPurchaseCost(request.getPurchaseCost());
         item.setSellingPrice(pricing.getFinalPrice());
-        item.setStatus(request.getStatus());
+        item.setStatus(status.name());
         return repository.save(item);
     }
 
@@ -79,8 +88,8 @@ public class JewelleryItemService {
     private PricingResponse calculatePricing(JewelleryItemRequest request) {
         PricingRequest pricingRequest = new PricingRequest();
         pricingRequest.setNetWeight(request.getNetWeight());
-        pricingRequest.setMetalType(request.getMetalType());
-        pricingRequest.setPurity(request.getPurity());
+        pricingRequest.setMetalType(MetalType.from(request.getMetalType()).name());
+        pricingRequest.setPurity(Purity.from(request.getPurity()).getCode());
         pricingRequest.setGoldRatePerGram(request.getGoldRatePerGram());
         pricingRequest.setStonePrice(request.getStonePrice());
         pricingRequest.setMakingCharges(request.getMakingCharges());

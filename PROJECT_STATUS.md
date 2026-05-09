@@ -65,6 +65,7 @@ JewelFlow is a Spring Boot backend for a jewelry inventory, customer, pricing, a
 - Invoice creation validates customer id, item id, quantity, tax percentage, discount, payment status, and payment method.
 - Invoice creation changes the invoiced inventory item status from `AVAILABLE` to `SOLD`.
 - Invoice creation prevents invoicing items that are not `AVAILABLE`.
+- Controlled enum validation for item status, metal type, purity, payment status, payment method, and invoice order status.
 - Dashboard summary API for inventory counts, inventory value, sales counts, revenue, and recent sales.
 - Shared `ResourceNotFoundException`.
 - Shared `GlobalExceptionHandler` for 404, bad request, and validation responses.
@@ -368,7 +369,7 @@ GET http://localhost:8080/api/dashboard/summary
 ## Known Issues
 - Inventory and pricing validation is field-level only; cross-field rules such as `netWeight <= grossWeight` are not implemented yet.
 - `goldRatePerGram` remains optional by design because pricing can fall back to the latest saved gold rate for `metalType` and `purity`.
-- `status`, `purity`, `metalType`, `paymentStatus`, and `paymentMethod` are strings instead of enums or controlled reference data.
+- `status`, `purity`, `metalType`, `paymentStatus`, and `paymentMethod` are stored as strings in the database, but application inputs are normalized through controlled enums.
 - Inventory and customer delete endpoints perform hard deletes.
 - Sale invoice number generation is based on `saleRepository.count() + 1`, which is not safe under concurrent requests.
 - Invoice/order number generation is based on `invoiceRepository.count() + 1`, which is not safe under concurrent requests.
@@ -409,11 +410,10 @@ Maven wrapper files should remain committed:
 - `backend/.mvn/wrapper/maven-wrapper.jar`, if present
 
 ## Next Recommended Steps
-1. Replace string constants for item status, payment status, payment method, metal type, and purity with enums or controlled validation.
-2. Add cross-field validation for jewelry-specific rules such as `netWeight <= grossWeight` and discount not exceeding pre-tax subtotal.
-3. Add focused service/controller tests for pricing, inventory creation, customer duplicate phone handling, sales creation, invoice creation, and dashboard summaries.
-4. Improve sale and invoice numbering so it is safe and predictable under concurrent requests.
-5. Add real authentication and role-based authorization for owner/admin, salesperson, and inventory manager workflows.
+1. Add cross-field validation for jewelry-specific rules such as `netWeight <= grossWeight` and discount not exceeding pre-tax subtotal.
+2. Add focused service/controller tests for pricing, inventory creation, customer duplicate phone handling, sales creation, invoice creation, and dashboard summaries.
+3. Improve sale and invoice numbering so it is safe and predictable under concurrent requests.
+4. Add real authentication and role-based authorization for owner/admin, salesperson, and inventory manager workflows.
 
 Recommended commit message for the latest validation/status update:
 

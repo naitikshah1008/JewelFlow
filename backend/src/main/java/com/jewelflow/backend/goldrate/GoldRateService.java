@@ -1,5 +1,7 @@
 package com.jewelflow.backend.goldrate;
 
+import com.jewelflow.backend.common.MetalType;
+import com.jewelflow.backend.common.Purity;
 import com.jewelflow.backend.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,9 +16,11 @@ public class GoldRateService {
     private final GoldRateRepository goldRateRepository;
 
     public GoldRateResponse createGoldRate(GoldRateRequest request) {
+        MetalType metalType = MetalType.from(request.getMetalType());
+        Purity purity = Purity.from(request.getPurity());
         GoldRate goldRate = GoldRate.builder()
-                .metalType(normalizeMetalType(request.getMetalType()))
-                .purity(normalizePurity(request.getPurity()))
+                .metalType(metalType.name())
+                .purity(purity.getCode())
                 .ratePerGram(request.getRatePerGram())
                 .rateDate(request.getRateDate())
                 .source(request.getSource())
@@ -35,8 +39,8 @@ public class GoldRateService {
 
     public List<GoldRateResponse> getGoldRatesByMetalAndPurity(String metalType, String purity) {
         return goldRateRepository.findByMetalTypeIgnoreCaseAndPurityIgnoreCaseOrderByRateDateDescCreatedAtDesc(
-                        normalizeMetalType(metalType),
-                        normalizePurity(purity)
+                        MetalType.from(metalType).name(),
+                        Purity.from(purity).getCode()
                 )
                 .stream()
                 .map(this::toResponse)
@@ -61,8 +65,8 @@ public class GoldRateService {
     }
 
     private GoldRate getLatestGoldRateEntity(String metalType, String purity) {
-        String normalizedMetalType = normalizeMetalType(metalType);
-        String normalizedPurity = normalizePurity(purity);
+        String normalizedMetalType = MetalType.from(metalType).name();
+        String normalizedPurity = Purity.from(purity).getCode();
 
         return goldRateRepository
                 .findTopByMetalTypeIgnoreCaseAndPurityIgnoreCaseOrderByRateDateDescCreatedAtDesc(
@@ -72,20 +76,6 @@ public class GoldRateService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "No gold rate found for metal type " + normalizedMetalType + " and purity " + normalizedPurity
                 ));
-    }
-
-    private String normalizeMetalType(String metalType) {
-        if (metalType == null || metalType.isBlank()) {
-            throw new IllegalArgumentException("Metal type is required");
-        }
-        return metalType.trim().toUpperCase();
-    }
-
-    private String normalizePurity(String purity) {
-        if (purity == null || purity.isBlank()) {
-            throw new IllegalArgumentException("Purity is required");
-        }
-        return purity.trim().toUpperCase();
     }
 
     private GoldRateResponse toResponse(GoldRate goldRate) {

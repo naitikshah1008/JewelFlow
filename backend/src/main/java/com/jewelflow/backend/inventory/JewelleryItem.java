@@ -1,5 +1,6 @@
 package com.jewelflow.backend.inventory;
 
+import com.jewelflow.backend.common.ItemStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -43,7 +44,7 @@ public class JewelleryItem {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
         if (this.status == null || this.status.isBlank()) {
-            this.status = "AVAILABLE";
+            this.status = ItemStatus.AVAILABLE.name();
         }
     }
 

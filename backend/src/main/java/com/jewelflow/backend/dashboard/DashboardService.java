@@ -1,5 +1,6 @@
 package com.jewelflow.backend.dashboard;
 
+import com.jewelflow.backend.common.ItemStatus;
 import com.jewelflow.backend.customer.CustomerRepository;
 import com.jewelflow.backend.inventory.JewelleryItemRepository;
 import com.jewelflow.backend.sales.Sale;
@@ -15,10 +16,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DashboardService {
 
-    private static final String ITEM_STATUS_AVAILABLE = "AVAILABLE";
-    private static final String ITEM_STATUS_RESERVED = "RESERVED";
-    private static final String ITEM_STATUS_SOLD = "SOLD";
-
     private final CustomerRepository customerRepository;
     private final JewelleryItemRepository jewelleryItemRepository;
     private final SaleRepository saleRepository;
@@ -33,12 +30,12 @@ public class DashboardService {
         return DashboardSummaryResponse.builder()
                 .totalCustomers(customerRepository.count())
                 .totalInventoryItems(jewelleryItemRepository.count())
-                .availableItems(jewelleryItemRepository.countByStatusIgnoreCase(ITEM_STATUS_AVAILABLE))
-                .reservedItems(jewelleryItemRepository.countByStatusIgnoreCase(ITEM_STATUS_RESERVED))
-                .soldItems(jewelleryItemRepository.countByStatusIgnoreCase(ITEM_STATUS_SOLD))
+                .availableItems(jewelleryItemRepository.countByStatusIgnoreCase(ItemStatus.AVAILABLE.name()))
+                .reservedItems(jewelleryItemRepository.countByStatusIgnoreCase(ItemStatus.RESERVED.name()))
+                .soldItems(jewelleryItemRepository.countByStatusIgnoreCase(ItemStatus.SOLD.name()))
                 .activeInventoryValue(jewelleryItemRepository.sumActiveInventoryValue())
-                .availableInventoryValue(jewelleryItemRepository.sumInventoryValueByStatus(ITEM_STATUS_AVAILABLE))
-                .reservedInventoryValue(jewelleryItemRepository.sumInventoryValueByStatus(ITEM_STATUS_RESERVED))
+                .availableInventoryValue(jewelleryItemRepository.sumInventoryValueByStatus(ItemStatus.AVAILABLE.name()))
+                .reservedInventoryValue(jewelleryItemRepository.sumInventoryValueByStatus(ItemStatus.RESERVED.name()))
                 .totalSalesCount(saleRepository.count())
                 .totalRevenue(saleRepository.sumTotalRevenue())
                 .todaySalesCount(saleRepository.countBySaleDateGreaterThanEqualAndSaleDateLessThan(todayStart, tomorrowStart))

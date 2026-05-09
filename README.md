@@ -27,6 +27,7 @@ Traditional jewelry software is often desktop-first and difficult to scale. Jewe
 - `goldrate` - latest and historical rate APIs
 - `dashboard` - summary reporting endpoint
 - `exception` - consistent API error responses
+- `common` - controlled enums for statuses, metal types, purity, and payments
 
 ## Run locally
 1. Start PostgreSQL (or use Docker Compose if configured).

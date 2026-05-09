@@ -1,5 +1,8 @@
 package com.jewelflow.backend.sales;
 
+import com.jewelflow.backend.common.ItemStatus;
+import com.jewelflow.backend.common.PaymentMethod;
+import com.jewelflow.backend.common.PaymentStatus;
 import com.jewelflow.backend.customer.Customer;
 import com.jewelflow.backend.customer.CustomerService;
 import com.jewelflow.backend.exception.ResourceNotFoundException;
@@ -11,16 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class SaleService {
-
-    private static final String ITEM_STATUS_AVAILABLE = "AVAILABLE";
-    private static final String ITEM_STATUS_SOLD = "SOLD";
-    private static final Set<String> SUPPORTED_PAYMENT_STATUSES = Set.of("PAID", "UNPAID", "PARTIAL");
-    private static final Set<String> SUPPORTED_PAYMENT_METHODS = Set.of("CASH", "CARD", "UPI", "BANK_TRANSFER", "OTHER");
 
     private final SaleRepository saleRepository;
     private final CustomerService customerService;
@@ -34,8 +31,8 @@ public class SaleService {
 
         ensureItemCanBeSold(item);
 
-        String paymentStatus = normalizePaymentStatus(request.getPaymentStatus());
-        String paymentMethod = normalizePaymentMethod(request.getPaymentMethod());
+        PaymentStatus paymentStatus = PaymentStatus.from(request.getPaymentStatus());
+        PaymentMethod paymentMethod = PaymentMethod.from(request.getPaymentMethod());
 
         Sale sale = Sale.builder()
                 .invoiceNumber(generateInvoiceNumber())
@@ -58,14 +55,14 @@ public class SaleService {
                 .taxAmount(item.getTaxAmount())
                 .discount(item.getDiscount())
                 .finalAmount(item.getSellingPrice())
-                .paymentStatus(paymentStatus)
-                .paymentMethod(paymentMethod)
+                .paymentStatus(paymentStatus.name())
+                .paymentMethod(paymentMethod.name())
                 .notes(request.getNotes())
                 .build();
 
         Sale savedSale = saleRepository.save(sale);
 
-        item.setStatus(ITEM_STATUS_SOLD);
+        item.setStatus(ItemStatus.SOLD.name());
         jewelleryItemRepository.save(item);
 
         return toResponse(savedSale);
@@ -88,35 +85,12 @@ public class SaleService {
     }
 
     private void ensureItemCanBeSold(JewelleryItem item) {
-        if (!ITEM_STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus())) {
+        if (ItemStatus.from(item.getStatus()) != ItemStatus.AVAILABLE) {
             throw new IllegalArgumentException("Item is not available for sale. Current status: " + item.getStatus());
         }
         if (item.getSellingPrice() == null) {
             throw new IllegalArgumentException("Item selling price is missing. Update item pricing before creating a sale.");
         }
-    }
-
-    private String normalizePaymentStatus(String paymentStatus) {
-        String normalizedStatus = normalizeRequiredValue(paymentStatus, "Payment status");
-        if (!SUPPORTED_PAYMENT_STATUSES.contains(normalizedStatus)) {
-            throw new IllegalArgumentException("Unsupported payment status: " + paymentStatus);
-        }
-        return normalizedStatus;
-    }
-
-    private String normalizePaymentMethod(String paymentMethod) {
-        String normalizedMethod = normalizeRequiredValue(paymentMethod, "Payment method");
-        if (!SUPPORTED_PAYMENT_METHODS.contains(normalizedMethod)) {
-            throw new IllegalArgumentException("Unsupported payment method: " + paymentMethod);
-        }
-        return normalizedMethod;
-    }
-
-    private String normalizeRequiredValue(String value, String fieldName) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(fieldName + " is required");
-        }
-        return value.trim().toUpperCase().replace(" ", "_");
     }
 
     private String generateInvoiceNumber() {

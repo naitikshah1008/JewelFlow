@@ -1,5 +1,7 @@
 package com.jewelflow.backend.pricing;
 
+import com.jewelflow.backend.common.MetalType;
+import com.jewelflow.backend.common.Purity;
 import com.jewelflow.backend.goldrate.GoldRateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -11,14 +13,18 @@ import java.math.RoundingMode;
 @RequiredArgsConstructor
 public class PricingService {
 
-    private static final String DEFAULT_METAL_TYPE = "GOLD";
+    private static final MetalType DEFAULT_METAL_TYPE = MetalType.GOLD;
 
     private final GoldRateService goldRateService;
 
     public PricingResponse calculatePrice(PricingRequest request) {
-        BigDecimal purityFactor = getPurityFactor(request.getPurity());
+        Purity purity = Purity.from(request.getPurity());
+        if (request.getMetalType() != null && !request.getMetalType().isBlank()) {
+            MetalType.from(request.getMetalType());
+        }
+        BigDecimal purityFactor = purity.getFactor();
         BigDecimal netWeight = defaultValue(request.getNetWeight());
-        BigDecimal goldRatePerGram = resolveGoldRatePerGram(request);
+        BigDecimal goldRatePerGram = resolveGoldRatePerGram(request, purity);
         BigDecimal stonePrice = defaultValue(request.getStonePrice());
         BigDecimal makingCharges = defaultValue(request.getMakingCharges());
         BigDecimal taxPercentage = defaultValue(request.getTaxPercentage());
@@ -27,33 +33,29 @@ public class PricingService {
         BigDecimal subtotal = goldValue.add(stonePrice).add(makingCharges).subtract(discount).setScale(2, RoundingMode.HALF_UP);
         BigDecimal taxAmount = subtotal.multiply(taxPercentage).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
         BigDecimal finalPrice = subtotal.add(taxAmount).setScale(2, RoundingMode.HALF_UP);
-        return PricingResponse.builder().purityFactor(purityFactor).goldRatePerGram(goldRatePerGram).goldValue(goldValue).stonePrice(stonePrice).makingCharges(makingCharges).subtotal(subtotal).taxAmount(taxAmount).discount(discount).finalPrice(finalPrice) .build();
+        return PricingResponse.builder()
+                .purityFactor(purityFactor)
+                .goldRatePerGram(goldRatePerGram)
+                .goldValue(goldValue)
+                .stonePrice(stonePrice)
+                .makingCharges(makingCharges)
+                .subtotal(subtotal)
+                .taxAmount(taxAmount)
+                .discount(discount)
+                .finalPrice(finalPrice)
+                .build();
     }
 
-    private BigDecimal resolveGoldRatePerGram(PricingRequest request) {
+    private BigDecimal resolveGoldRatePerGram(PricingRequest request, Purity purity) {
         if (request.getGoldRatePerGram() != null) {
             return request.getGoldRatePerGram();
         }
 
-        String metalType = request.getMetalType();
-        if (metalType == null || metalType.isBlank()) {
-            metalType = DEFAULT_METAL_TYPE;
-        }
+        MetalType metalType = request.getMetalType() == null || request.getMetalType().isBlank()
+                ? DEFAULT_METAL_TYPE
+                : MetalType.from(request.getMetalType());
 
-        return goldRateService.getLatestRatePerGram(metalType, request.getPurity());
-    }
-
-    private BigDecimal getPurityFactor(String purity) {
-        if (purity == null) {
-            throw new IllegalArgumentException("Purity is required");
-        }
-        return switch (purity.toUpperCase()) {
-            case "24K" -> BigDecimal.valueOf(24).divide(BigDecimal.valueOf(24), 6, RoundingMode.HALF_UP);
-            case "22K" -> BigDecimal.valueOf(22).divide(BigDecimal.valueOf(24), 6, RoundingMode.HALF_UP);
-            case "18K" -> BigDecimal.valueOf(18).divide(BigDecimal.valueOf(24), 6, RoundingMode.HALF_UP);
-            case "14K" -> BigDecimal.valueOf(14).divide(BigDecimal.valueOf(24), 6, RoundingMode.HALF_UP);
-            default -> throw new IllegalArgumentException("Unsupported purity: " + purity);
-        };
+        return goldRateService.getLatestRatePerGram(metalType.name(), purity.getCode());
     }
 
     private BigDecimal defaultValue(BigDecimal value) {
