@@ -2,19 +2,26 @@ import { apiRequest } from "./client";
 import type {
   Customer,
   CustomerRequest,
+  CurrentUser,
   DashboardSummary,
   GoldRate,
   GoldRateRequest,
+  AuthResponse,
   Invoice,
   InvoiceRequest,
   JewelleryItem,
   JewelleryItemRequest,
+  LoginRequest,
   PricingRequest,
   PricingResponse,
   Sale
 } from "../types";
 
 export const api = {
+  login: (body: LoginRequest) =>
+    apiRequest<AuthResponse>("/api/auth/login", { method: "POST", body: JSON.stringify(body) }),
+  currentUser: () => apiRequest<CurrentUser>("/api/auth/me"),
+
   dashboard: () => apiRequest<DashboardSummary>("/api/dashboard/summary"),
 
   items: (params?: Record<string, string>) => apiRequest<JewelleryItem[]>("/api/items", {}, params),

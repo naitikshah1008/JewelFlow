@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import type { AuthSession } from "../types";
+import { Button } from "./Button";
 
 export interface NavItem {
   path: string;
@@ -10,10 +12,12 @@ interface LayoutProps {
   path: string;
   title: string;
   navItems: NavItem[];
+  session: AuthSession;
   onNavigate: (path: string) => void;
+  onLogout: () => void;
 }
 
-export function Layout({ children, path, title, navItems, onNavigate }: LayoutProps) {
+export function Layout({ children, path, title, navItems, session, onNavigate, onLogout }: LayoutProps) {
   return (
     <div className="shell">
       <aside className="sidebar">
@@ -41,8 +45,11 @@ export function Layout({ children, path, title, navItems, onNavigate }: LayoutPr
         <header className="topbar">
           <div>
             <h1>{title}</h1>
-            <span>Local demo at http://localhost:8080</span>
+            <span>{session.username} / {session.role}</span>
           </div>
+          <Button variant="secondary" type="button" onClick={onLogout}>
+            Log Out
+          </Button>
         </header>
         <main>{children}</main>
       </div>
