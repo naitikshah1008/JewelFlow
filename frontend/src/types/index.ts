@@ -4,6 +4,7 @@ export type Purity = "24K" | "22K" | "18K" | "14K";
 export type PaymentStatus = "PAID" | "UNPAID" | "PARTIAL";
 export type PaymentMethod = "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "OTHER";
 export type OrderStatus = "ISSUED";
+export type UserRole = "ADMIN" | "STAFF";
 
 export interface ApiErrorBody {
   timestamp?: string;
@@ -11,6 +12,26 @@ export interface ApiErrorBody {
   error?: string;
   message?: string;
   fieldErrors?: Record<string, string>;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  tokenType: "Bearer";
+  expiresAt: string;
+  username: string;
+  role: UserRole;
+}
+
+export interface AuthSession extends AuthResponse {}
+
+export interface CurrentUser {
+  username: string;
+  role: UserRole;
 }
 
 export interface JewelleryItem {

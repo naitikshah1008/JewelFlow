@@ -1,8 +1,8 @@
 # JewelFlow
 
-JewelFlow is a local-demo-ready jewelry store management system for inventory, customers, gold rates, pricing, invoices/orders, sales records, and dashboard reporting.
+JewelFlow is a local-demo-ready jewelry store management system for inventory, customers, gold rates, pricing, invoices/orders, sales records, dashboard reporting, and authenticated store access.
 
-Version 1 includes a Spring Boot backend and a React TypeScript dashboard frontend connected to `http://localhost:8080`.
+Version 1 includes a Spring Boot backend and a React TypeScript dashboard frontend connected to `http://localhost:8080`. The current branch adds the next-step JWT authentication baseline for `ADMIN` and `STAFF` users.
 
 ## Tech Stack
 - Backend: Java 17, Spring Boot 4, Spring Data JPA, Hibernate, PostgreSQL, Maven Wrapper
@@ -13,6 +13,7 @@ Version 1 includes a Spring Boot backend and a React TypeScript dashboard fronte
 
 ## Folder Structure
 - `backend/` - Spring Boot API application
+- `backend/src/main/java/com/jewelflow/backend/auth` - users, login, JWT issuing, and bootstrap demo accounts
 - `frontend/` - React + TypeScript + Vite dashboard
 - `infra/` - Docker Compose PostgreSQL setup
 - `PROJECT_STATUS.md` - detailed implementation state and known limitations
@@ -61,6 +62,24 @@ cp frontend/.env.example frontend/.env
 
 Do not commit local `.env` files.
 
+Backend authentication environment variables:
+
+```bash
+JWT_SECRET=replace-with-at-least-32-characters
+JWT_EXPIRATION_MINUTES=480
+JEWELFLOW_ADMIN_USERNAME=admin
+JEWELFLOW_ADMIN_PASSWORD=change_me
+JEWELFLOW_STAFF_USERNAME=staff
+JEWELFLOW_STAFF_PASSWORD=change_me
+JEWELFLOW_CORS_ALLOWED_ORIGIN=http://localhost:5173
+```
+
+Local defaults create two demo users when they do not already exist:
+- `admin` / `AdminDemo123!`
+- `staff` / `StaffDemo123!`
+
+Override those credentials before using the app outside a local demo environment.
+
 ## Test
 Backend:
 
@@ -92,6 +111,13 @@ npm run build
 - Safer invoice and sale numbers using timestamp plus random suffix instead of `count() + 1`
 - Dashboard revenue includes invoices/orders and existing sales
 
+## Authentication Baseline
+- JWT login endpoint at `POST /api/auth/login`
+- Authenticated current-user endpoint at `GET /api/auth/me`
+- Protected backend APIs by default
+- `ADMIN`-only deletes for customers and inventory items
+- Frontend login screen, protected routes, token persistence, bearer-token API requests, and logout
+
 ## Postman Notes
 Postman remains useful for direct API checks. Use base URL:
 
@@ -100,14 +126,16 @@ http://localhost:8080
 ```
 
 Recommended manual flow:
-1. `POST /api/gold-rates`
-2. `POST /api/customers`
-3. `POST /api/items`
-4. `POST /api/invoices`
-5. `GET /api/dashboard/summary`
+1. `POST /api/auth/login`
+2. Copy the JWT into the `Authorization: Bearer <token>` header
+3. `POST /api/gold-rates`
+4. `POST /api/customers`
+5. `POST /api/items`
+6. `POST /api/invoices`
+7. `GET /api/dashboard/summary`
 
 ## Known Limitations
-- Local V1 has no login, JWT, or role-based authorization.
+- Authentication is limited to bootstrap demo users; there is no user-management UI, password reset flow, or refresh-token flow yet.
 - Inventory and customer deletes are still hard deletes.
 - Invoice and sales flows both exist; V1 frontend uses invoices/orders as the main billing flow and keeps sales read-only.
 - Inventory still models serialized jewelry items rather than stock quantity decrementing.
@@ -116,7 +144,7 @@ Recommended manual flow:
 
 ## Next Steps
 - Add production migrations.
-- Add authentication and role-based authorization.
+- Add user management, password reset, and refresh-token support.
 - Introduce soft deletes or archive flows.
 - Add pagination and sorting contracts for larger datasets.
 - Decide whether sales should be merged into invoices or kept as a separate retail-sale workflow.

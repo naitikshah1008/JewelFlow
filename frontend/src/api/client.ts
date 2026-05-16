@@ -1,4 +1,5 @@
 import type { ApiErrorBody } from "../types";
+import { clearAuthSession, readAuthSession } from "../utils/auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
 
@@ -35,15 +36,21 @@ export async function apiRequest<T>(
   options: RequestInit = {},
   params?: Record<string, QueryValue>
 ): Promise<T> {
+  const session = readAuthSession();
   const response = await fetch(`${API_BASE_URL}${path}${buildQuery(params)}`, {
     headers: {
       "Content-Type": "application/json",
+      ...(session ? { Authorization: `${session.tokenType} ${session.token}` } : {}),
       ...(options.headers ?? {})
     },
     ...options
   });
 
   if (!response.ok) {
+    if (response.status === 401 && path !== "/api/auth/login") {
+      clearAuthSession();
+      window.dispatchEvent(new Event("jewelflow:auth-expired"));
+    }
     let body: ApiErrorBody = {};
     try {
       body = await response.json();

@@ -1,7 +1,7 @@
 # JewelFlow Project Status
 
 ## Current State
-JewelFlow Version 1 is a local-demo-ready jewelry store management system with a Spring Boot backend and a React TypeScript frontend. The frontend connects to the backend at `http://localhost:8080` and runs locally at `http://localhost:5173`.
+JewelFlow Version 1 is a local-demo-ready jewelry store management system with a Spring Boot backend and a React TypeScript frontend. The current branch adds the next-step JWT authentication baseline with `ADMIN` and `STAFF` roles. The frontend connects to the backend at `http://localhost:8080` and runs locally at `http://localhost:5173`.
 
 ## Project Purpose
 JewelFlow helps small and mid-sized jewelry stores manage serialized jewelry inventory, customers, gold rates, pricing, invoices/orders, sales records, and store dashboard metrics.
@@ -19,7 +19,8 @@ JewelFlow helps small and mid-sized jewelry stores manage serialized jewelry inv
 
 ## Current Folder Structure
 - `backend/src/main/java/com/jewelflow/backend/common`: controlled enums for item status, metal type, purity, order status, payment status, and payment method.
-- `backend/src/main/java/com/jewelflow/backend/config`: local Spring Security configuration.
+- `backend/src/main/java/com/jewelflow/backend/auth`: application users, login DTOs, JWT issuing, and bootstrap demo accounts.
+- `backend/src/main/java/com/jewelflow/backend/config`: JWT-backed Spring Security configuration.
 - `backend/src/main/java/com/jewelflow/backend/customer`: customer entity, request DTO, repository, service, and controller.
 - `backend/src/main/java/com/jewelflow/backend/dashboard`: dashboard summary DTOs, recent activity DTOs, service, and controller.
 - `backend/src/main/java/com/jewelflow/backend/exception`: shared exception type and global REST exception handler.
@@ -61,12 +62,17 @@ JewelFlow helps small and mid-sized jewelry stores manage serialized jewelry inv
 - Dashboard summary includes invoice/order revenue and counts in addition to legacy sales data.
 - Shared `ResourceNotFoundException`.
 - Shared `GlobalExceptionHandler` for 404, bad request, and validation responses.
-- Local security configuration permits `/api/**` without authentication.
+- JWT login with bootstrap `ADMIN` and `STAFF` users.
+- Backend APIs are protected by default after login.
+- Customer and inventory deletes require the `ADMIN` role.
+- Frontend login screen, token persistence, protected routing, bearer-token requests, and logout.
 
 ## Current API Endpoints
 
 | Method | Endpoint path | Purpose |
 | --- | --- | --- |
+| `POST` | `/api/auth/login` | Authenticate and issue JWT |
+| `GET` | `/api/auth/me` | Get current authenticated user |
 | `POST` | `/api/items` | Create inventory item and calculate pricing |
 | `GET` | `/api/items?status=&category=&metalType=&purity=&keyword=` | List/filter inventory items |
 | `GET` | `/api/items/{id}` | Get inventory item |
@@ -95,12 +101,13 @@ JewelFlow helps small and mid-sized jewelry stores manage serialized jewelry inv
 2. Start Spring Boot backend.
 3. Start React frontend.
 4. Open `http://localhost:5173`.
-5. Create a gold rate.
-6. Create a customer.
-7. Create an inventory item and confirm calculated pricing.
-8. Create an invoice/order for that customer and item.
-9. Confirm the item status changes from `AVAILABLE` to `SOLD`.
-10. Confirm dashboard revenue, billing count, and recent invoices update.
+5. Sign in with a bootstrap demo user.
+6. Create a gold rate.
+7. Create a customer.
+8. Create an inventory item and confirm calculated pricing.
+9. Create an invoice/order for that customer and item.
+10. Confirm the item status changes from `AVAILABLE` to `SOLD`.
+11. Confirm dashboard revenue, billing count, and recent invoices update.
 
 ## Configuration Notes
 - Backend default URL: `http://localhost:8080`
@@ -111,7 +118,13 @@ JewelFlow helps small and mid-sized jewelry stores manage serialized jewelry inv
 - Local datasource password: `jewelflow_pass`
 - Hibernate uses `spring.jpa.hibernate.ddl-auto=update`.
 - SQL logging is currently enabled.
-- Spring Security is installed but local V1 permits all requests.
+- JWT secret env var: `JWT_SECRET`
+- JWT expiry env var: `JWT_EXPIRATION_MINUTES`
+- Bootstrap admin env vars: `JEWELFLOW_ADMIN_USERNAME`, `JEWELFLOW_ADMIN_PASSWORD`
+- Bootstrap staff env vars: `JEWELFLOW_STAFF_USERNAME`, `JEWELFLOW_STAFF_PASSWORD`
+- Allowed frontend origin env var: `JEWELFLOW_CORS_ALLOWED_ORIGIN`
+- Default local demo users are `admin` / `AdminDemo123!` and `staff` / `StaffDemo123!`.
+- Spring Security protects APIs by default; only `POST /api/auth/login` is public.
 - Controllers use `@CrossOrigin(origins = "*")`.
 
 ## How to Run Locally
@@ -158,7 +171,7 @@ Backend verification:
 ```text
 cd backend && ./mvnw test
 BUILD SUCCESS
-Tests run: 10, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 11, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 Frontend verification:
@@ -174,10 +187,9 @@ vite build completed successfully
 Browser smoke verification:
 
 ```text
-Dashboard loaded from backend: true
-Inventory route loaded: true
-Invoices route loaded: true
-Create invoice route loaded: true
+Login screen loaded: true
+Admin login loaded protected dashboard: true
+Logout returned to /login: true
 ```
 
 ## Current Test Coverage
@@ -191,19 +203,20 @@ Create invoice route loaded: true
 - Cannot invoice an already `SOLD` item.
 - Invoice number generation no longer uses repository count.
 - Dashboard summary combines sales and invoice/order revenue.
+- Authentication login service returns JWT responses.
 
 ## Sales vs Invoices
 Both flows remain because both existed in the backend. Version 1 frontend treats invoices/orders as the primary billing workflow. The sales page is read-only and supports the existing legacy sales list.
 
 ## Known Limitations
-- No login, JWT, authorization, or role model yet.
+- Authentication currently uses bootstrap demo users only; there is no user-management UI, password reset, or refresh-token flow yet.
 - Inventory and customer delete endpoints perform hard deletes.
 - `status`, `purity`, `metalType`, `paymentStatus`, and `paymentMethod` are stored as strings in the database, with application-level enum validation.
 - Invoice quantity scales pricing values, but the inventory model still represents one serialized jewelry item and does not track stock quantity decrementing.
 - List endpoints have practical filtering but not full pagination contracts yet.
 - Dashboard date boundaries use the server-local date.
 - `ddl-auto=update` is for local demo convenience and should be replaced with migrations before production.
-- Spring Security still logs a generated password even though local V1 permits `/api/**`.
+- User lifecycle management is not implemented yet; bootstrap credentials are the only account provisioning path.
 - SQL logging is useful for local debugging but noisy for production.
 
 ## Git and .gitignore Notes
@@ -219,8 +232,8 @@ Do not commit local, generated, or sensitive files such as:
 - local Postman workspace files under `.postman/` or `postman/`
 
 ## Next Recommended Steps
-1. Add real authentication and role-based authorization.
-2. Replace `ddl-auto=update` with migration tooling.
+1. Replace `ddl-auto=update` with migration tooling.
+2. Add user-management, password-reset, and refresh-token flows.
 3. Add pagination and sorting response contracts for large datasets.
 4. Decide whether to merge sales into invoices or keep sales as a separate workflow.
 5. Add soft delete/archive behavior for customers and inventory.
@@ -228,5 +241,5 @@ Do not commit local, generated, or sensitive files such as:
 Recommended commit message:
 
 ```text
-Make JewelFlow V1 demo ready with React dashboard
+Add JWT authentication and role-based access
 ```

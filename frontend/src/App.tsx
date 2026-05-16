@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Layout, type NavItem } from "./components/Layout";
 import { CreateInvoicePage } from "./pages/CreateInvoicePage";
 import { CustomerFormPage } from "./pages/CustomerFormPage";
@@ -8,9 +8,12 @@ import { GoldRatesPage } from "./pages/GoldRatesPage";
 import { InventoryFormPage } from "./pages/InventoryFormPage";
 import { InventoryPage } from "./pages/InventoryPage";
 import { InvoicesPage } from "./pages/InvoicesPage";
+import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { PricingCalculatorPage } from "./pages/PricingCalculatorPage";
 import { SalesPage } from "./pages/SalesPage";
+import type { AuthSession } from "./types";
+import { clearAuthSession, readAuthSession } from "./utils/auth";
 
 const navItems: NavItem[] = [
   { path: "/", label: "Dashboard" },
@@ -45,19 +48,55 @@ function parseId(path: string, prefix: string): number | undefined {
 
 export function App() {
   const [path, setPath] = useState(window.location.pathname);
+  const [session, setSession] = useState<AuthSession | null>(() => readAuthSession());
 
   useEffect(() => {
     const handlePop = () => setPath(window.location.pathname);
+    const handleExpired = () => {
+      setSession(null);
+      window.history.pushState({}, "", "/login");
+      setPath("/login");
+    };
     window.addEventListener("popstate", handlePop);
-    return () => window.removeEventListener("popstate", handlePop);
+    window.addEventListener("jewelflow:auth-expired", handleExpired);
+    return () => {
+      window.removeEventListener("popstate", handlePop);
+      window.removeEventListener("jewelflow:auth-expired", handleExpired);
+    };
   }, []);
+
+  useEffect(() => {
+    if (!session && path !== "/login") {
+      window.history.replaceState({}, "", "/login");
+      setPath("/login");
+    }
+    if (session && path === "/login") {
+      window.history.replaceState({}, "", "/");
+      setPath("/");
+    }
+  }, [path, session]);
 
   function navigate(nextPath: string) {
     window.history.pushState({}, "", nextPath);
     setPath(nextPath);
   }
 
-  const title = useMemo(() => getPathTitle(path), [path]);
+  function handleLogin(nextSession: AuthSession) {
+    setSession(nextSession);
+    navigate("/");
+  }
+
+  function handleLogout() {
+    clearAuthSession();
+    setSession(null);
+    navigate("/login");
+  }
+
+  if (!session) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
+
+  const title = getPathTitle(path);
   const inventoryEditId = parseId(path, "/inventory");
   const customerEditId = parseId(path, "/customers");
 
@@ -77,7 +116,14 @@ export function App() {
   else page = <NotFoundPage onNavigate={navigate} />;
 
   return (
-    <Layout path={path} title={title} navItems={navItems} onNavigate={navigate}>
+    <Layout
+      path={path}
+      title={title}
+      navItems={navItems}
+      session={session}
+      onNavigate={navigate}
+      onLogout={handleLogout}
+    >
       {page}
     </Layout>
   );
