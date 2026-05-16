@@ -14,3 +14,17 @@ spring:
 
 server:
   port: 8080
+
+jewelflow:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:local-demo-secret-change-before-production-123456}
+      expiration-minutes: ${JWT_EXPIRATION_MINUTES:480}
+    bootstrap-admin:
+      username: ${JEWELFLOW_ADMIN_USERNAME:admin}
+      password: ${JEWELFLOW_ADMIN_PASSWORD:AdminDemo123!}
+    bootstrap-staff:
+      username: ${JEWELFLOW_STAFF_USERNAME:staff}
+      password: ${JEWELFLOW_STAFF_PASSWORD:StaffDemo123!}
+    cors:
+      allowed-origin: ${JEWELFLOW_CORS_ALLOWED_ORIGIN:http://localhost:5173}
