@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { api } from "./api/jewelflow";
 import { Layout, type NavItem } from "./components/Layout";
 import { CreateInvoicePage } from "./pages/CreateInvoicePage";
 import { CustomerFormPage } from "./pages/CustomerFormPage";
@@ -12,6 +13,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { PricingCalculatorPage } from "./pages/PricingCalculatorPage";
 import { SalesPage } from "./pages/SalesPage";
+import { UsersPage } from "./pages/UsersPage";
 import type { AuthSession } from "./types";
 import { clearAuthSession, readAuthSession } from "./utils/auth";
 
@@ -22,7 +24,8 @@ const navItems: NavItem[] = [
   { path: "/gold-rates", label: "Gold Rates" },
   { path: "/pricing", label: "Pricing" },
   { path: "/invoices", label: "Invoices" },
-  { path: "/sales", label: "Sales" }
+  { path: "/sales", label: "Sales" },
+  { path: "/users", label: "Users", adminOnly: true }
 ];
 
 function getPathTitle(path: string): string {
@@ -38,6 +41,7 @@ function getPathTitle(path: string): string {
   if (path.startsWith("/invoices/new")) return "Create Invoice";
   if (path.startsWith("/invoices")) return "Invoices / Orders";
   if (path.startsWith("/sales")) return "Sales";
+  if (path.startsWith("/users")) return "Users";
   return "Not Found";
 }
 
@@ -57,11 +61,14 @@ export function App() {
       window.history.pushState({}, "", "/login");
       setPath("/login");
     };
+    const handleAuthUpdated = () => setSession(readAuthSession());
     window.addEventListener("popstate", handlePop);
     window.addEventListener("jewelflow:auth-expired", handleExpired);
+    window.addEventListener("jewelflow:auth-updated", handleAuthUpdated);
     return () => {
       window.removeEventListener("popstate", handlePop);
       window.removeEventListener("jewelflow:auth-expired", handleExpired);
+      window.removeEventListener("jewelflow:auth-updated", handleAuthUpdated);
     };
   }, []);
 
@@ -86,10 +93,17 @@ export function App() {
     navigate("/");
   }
 
-  function handleLogout() {
-    clearAuthSession();
-    setSession(null);
-    navigate("/login");
+  async function handleLogout() {
+    const currentSession = readAuthSession();
+    try {
+      if (currentSession?.refreshToken) {
+        await api.logout({ refreshToken: currentSession.refreshToken });
+      }
+    } finally {
+      clearAuthSession();
+      setSession(null);
+      navigate("/login");
+    }
   }
 
   if (!session) {
@@ -113,13 +127,16 @@ export function App() {
   else if (path === "/invoices") page = <InvoicesPage onNavigate={navigate} />;
   else if (path === "/invoices/new") page = <CreateInvoicePage onNavigate={navigate} />;
   else if (path === "/sales") page = <SalesPage />;
+  else if (path === "/users" && session.role === "ADMIN") page = <UsersPage />;
   else page = <NotFoundPage onNavigate={navigate} />;
+
+  const visibleNavItems = navItems.filter((item) => !item.adminOnly || session.role === "ADMIN");
 
   return (
     <Layout
       path={path}
       title={title}
-      navItems={navItems}
+      navItems={visibleNavItems}
       session={session}
       onNavigate={navigate}
       onLogout={handleLogout}

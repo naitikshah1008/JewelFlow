@@ -5,6 +5,7 @@ import { Button } from "./Button";
 export interface NavItem {
   path: string;
   label: string;
+  adminOnly?: boolean;
 }
 
 interface LayoutProps {
@@ -14,7 +15,7 @@ interface LayoutProps {
   navItems: NavItem[];
   session: AuthSession;
   onNavigate: (path: string) => void;
-  onLogout: () => void;
+  onLogout: () => void | Promise<void>;
 }
 
 export function Layout({ children, path, title, navItems, session, onNavigate, onLogout }: LayoutProps) {
