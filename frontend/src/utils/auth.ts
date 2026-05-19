@@ -24,5 +24,10 @@ export function clearAuthSession() {
 }
 
 export function isSessionValid(session: AuthSession): boolean {
+  return Boolean(session.refreshToken)
+    && new Date(session.refreshExpiresAt ?? session.expiresAt).getTime() > Date.now();
+}
+
+export function isAccessTokenValid(session: AuthSession): boolean {
   return Boolean(session.token) && new Date(session.expiresAt).getTime() > Date.now();
 }

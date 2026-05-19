@@ -23,15 +23,49 @@ export interface AuthResponse {
   token: string;
   tokenType: "Bearer";
   expiresAt: string;
+  refreshToken: string;
+  refreshExpiresAt: string;
   username: string;
   role: UserRole;
 }
 
 export interface AuthSession extends AuthResponse {}
 
+export interface RefreshRequest {
+  refreshToken: string;
+}
+
+export interface LogoutRequest {
+  refreshToken: string;
+}
+
 export interface CurrentUser {
   username: string;
   role: UserRole;
+}
+
+export interface UserAccount {
+  id: number;
+  username: string;
+  role: UserRole;
+  enabled: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateUserRequest {
+  username: string;
+  password: string;
+  role: UserRole;
+}
+
+export interface UpdateUserRequest {
+  role: UserRole;
+  enabled: boolean;
+}
+
+export interface ResetPasswordRequest {
+  newPassword: string;
 }
 
 export interface JewelleryItem {

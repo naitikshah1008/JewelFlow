@@ -31,6 +31,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         token: response.token,
         tokenType: response.tokenType,
         expiresAt: response.expiresAt,
+        refreshToken: response.refreshToken,
+        refreshExpiresAt: response.refreshExpiresAt,
         username: response.username,
         role: response.role
       };

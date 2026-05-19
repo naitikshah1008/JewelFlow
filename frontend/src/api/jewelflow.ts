@@ -12,15 +12,30 @@ import type {
   JewelleryItem,
   JewelleryItemRequest,
   LoginRequest,
+  LogoutRequest,
   PricingRequest,
   PricingResponse,
-  Sale
+  ResetPasswordRequest,
+  Sale,
+  UpdateUserRequest,
+  UserAccount,
+  CreateUserRequest
 } from "../types";
 
 export const api = {
   login: (body: LoginRequest) =>
     apiRequest<AuthResponse>("/api/auth/login", { method: "POST", body: JSON.stringify(body) }),
+  logout: (body: LogoutRequest) =>
+    apiRequest<void>("/api/auth/logout", { method: "POST", body: JSON.stringify(body) }),
   currentUser: () => apiRequest<CurrentUser>("/api/auth/me"),
+
+  users: () => apiRequest<UserAccount[]>("/api/users"),
+  createUser: (body: CreateUserRequest) =>
+    apiRequest<UserAccount>("/api/users", { method: "POST", body: JSON.stringify(body) }),
+  updateUser: (id: number, body: UpdateUserRequest) =>
+    apiRequest<UserAccount>(`/api/users/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  resetUserPassword: (id: number, body: ResetPasswordRequest) =>
+    apiRequest<UserAccount>(`/api/users/${id}/reset-password`, { method: "POST", body: JSON.stringify(body) }),
 
   dashboard: () => apiRequest<DashboardSummary>("/api/dashboard/summary"),
 
