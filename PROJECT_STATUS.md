@@ -1,7 +1,7 @@
 # JewelFlow Project Status
 
 ## Current State
-JewelFlow Version 1 is a local-demo-ready jewelry store management system with a Spring Boot backend and a React TypeScript frontend. The current branch adds the next-step JWT authentication baseline with `ADMIN` and `STAFF` roles. The frontend connects to the backend at `http://localhost:8080` and runs locally at `http://localhost:5173`.
+JewelFlow Version 1 is a local-demo-ready jewelry store management system with a Spring Boot backend and a React TypeScript frontend. The current branch extends the authentication baseline with refresh-token sessions and admin user management for `ADMIN` and `STAFF` users. The frontend connects to the backend at `http://localhost:8080` and runs locally at `http://localhost:5173`.
 
 ## Project Purpose
 JewelFlow helps small and mid-sized jewelry stores manage serialized jewelry inventory, customers, gold rates, pricing, invoices/orders, sales records, and store dashboard metrics.
@@ -19,7 +19,7 @@ JewelFlow helps small and mid-sized jewelry stores manage serialized jewelry inv
 
 ## Current Folder Structure
 - `backend/src/main/java/com/jewelflow/backend/common`: controlled enums for item status, metal type, purity, order status, payment status, and payment method.
-- `backend/src/main/java/com/jewelflow/backend/auth`: application users, login DTOs, JWT issuing, and bootstrap demo accounts.
+- `backend/src/main/java/com/jewelflow/backend/auth`: application users, login DTOs, JWT issuing, refresh tokens, user-management endpoints, and bootstrap demo accounts.
 - `backend/src/main/java/com/jewelflow/backend/config`: JWT-backed Spring Security configuration.
 - `backend/src/main/java/com/jewelflow/backend/customer`: customer entity, request DTO, repository, service, and controller.
 - `backend/src/main/java/com/jewelflow/backend/dashboard`: dashboard summary DTOs, recent activity DTOs, service, and controller.
@@ -33,7 +33,7 @@ JewelFlow helps small and mid-sized jewelry stores manage serialized jewelry inv
 - `backend/src/test/java/com/jewelflow/backend`: backend context and focused service tests.
 - `frontend/src/api`: frontend API client and JewelFlow endpoint functions.
 - `frontend/src/components`: reusable UI components.
-- `frontend/src/pages`: dashboard, table, and form pages.
+- `frontend/src/pages`: dashboard, table, form, login, and admin user-management pages.
 - `frontend/src/types`: TypeScript DTOs matching backend API models.
 - `frontend/src/utils`: formatting helpers.
 - `infra`: Docker Compose file for local PostgreSQL.
@@ -64,9 +64,11 @@ JewelFlow helps small and mid-sized jewelry stores manage serialized jewelry inv
 - Shared `ResourceNotFoundException`.
 - Shared `GlobalExceptionHandler` for 404, bad request, and validation responses.
 - JWT login with bootstrap `ADMIN` and `STAFF` users.
+- Refresh-token rotation and logout token revocation.
+- Admin user-management API for listing, creating, enabling/disabling, role changes, and password resets.
 - Backend APIs are protected by default after login.
 - Customer and inventory deletes require the `ADMIN` role.
-- Frontend login screen, token persistence, protected routing, bearer-token requests, and logout.
+- Frontend login screen, token persistence, protected routing, bearer-token requests, automatic access-token refresh, logout, and admin-only Users page.
 - Flyway-managed initial database schema with Hibernate schema validation.
 
 ## Current API Endpoints
@@ -74,7 +76,13 @@ JewelFlow helps small and mid-sized jewelry stores manage serialized jewelry inv
 | Method | Endpoint path | Purpose |
 | --- | --- | --- |
 | `POST` | `/api/auth/login` | Authenticate and issue JWT |
+| `POST` | `/api/auth/refresh` | Rotate refresh token and issue a new JWT |
+| `POST` | `/api/auth/logout` | Revoke the current refresh token |
 | `GET` | `/api/auth/me` | Get current authenticated user |
+| `GET` | `/api/users` | List users, admin only |
+| `POST` | `/api/users` | Create user, admin only |
+| `PUT` | `/api/users/{id}` | Update user role/enabled status, admin only |
+| `POST` | `/api/users/{id}/reset-password` | Reset user password, admin only |
 | `POST` | `/api/items` | Create inventory item and calculate pricing |
 | `GET` | `/api/items?status=&category=&metalType=&purity=&keyword=` | List/filter inventory items |
 | `GET` | `/api/items/{id}` | Get inventory item |
@@ -104,12 +112,13 @@ JewelFlow helps small and mid-sized jewelry stores manage serialized jewelry inv
 3. Start React frontend.
 4. Open `http://localhost:5173`.
 5. Sign in with a bootstrap demo user.
-6. Create a gold rate.
-7. Create a customer.
-8. Create an inventory item and confirm calculated pricing.
-9. Create an invoice/order for that customer and item.
-10. Confirm the item status changes from `AVAILABLE` to `SOLD`.
-11. Confirm dashboard revenue, billing count, and recent invoices update.
+6. As `admin`, open Users to create or update staff/admin accounts if needed.
+7. Create a gold rate.
+8. Create a customer.
+9. Create an inventory item and confirm calculated pricing.
+10. Create an invoice/order for that customer and item.
+11. Confirm the item status changes from `AVAILABLE` to `SOLD`.
+12. Confirm dashboard revenue, billing count, and recent invoices update.
 
 ## Configuration Notes
 - Backend default URL: `http://localhost:8080`
@@ -124,11 +133,13 @@ JewelFlow helps small and mid-sized jewelry stores manage serialized jewelry inv
 - SQL logging is currently enabled.
 - JWT secret env var: `JWT_SECRET`
 - JWT expiry env var: `JWT_EXPIRATION_MINUTES`
+- Refresh-token expiry env var: `JWT_REFRESH_EXPIRATION_DAYS`
 - Bootstrap admin env vars: `JEWELFLOW_ADMIN_USERNAME`, `JEWELFLOW_ADMIN_PASSWORD`
 - Bootstrap staff env vars: `JEWELFLOW_STAFF_USERNAME`, `JEWELFLOW_STAFF_PASSWORD`
 - Allowed frontend origin env var: `JEWELFLOW_CORS_ALLOWED_ORIGIN`
 - Default local demo users are `admin` / `AdminDemo123!` and `staff` / `StaffDemo123!`.
-- Spring Security protects APIs by default; only `POST /api/auth/login` is public.
+- Spring Security protects APIs by default; only `POST /api/auth/login`, `POST /api/auth/refresh`, and `POST /api/auth/logout` are public.
+- User-management endpoints require the `ADMIN` role.
 - Controllers use `@CrossOrigin(origins = "*")`.
 
 ## How to Run Locally
@@ -175,7 +186,7 @@ Backend verification:
 ```text
 cd backend && ./mvnw test
 BUILD SUCCESS
-Tests run: 11, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 16, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 Frontend verification:
@@ -208,12 +219,15 @@ Logout returned to /login: true
 - Invoice number generation no longer uses repository count.
 - Dashboard summary combines sales and invoice/order revenue.
 - Authentication login service returns JWT responses.
+- Refresh tokens are stored hashed and rotate on refresh.
+- Admin user management rejects duplicate usernames and prevents disabling the last enabled admin.
 
 ## Sales vs Invoices
 Both flows remain because both existed in the backend. Version 1 frontend treats invoices/orders as the primary billing workflow. The sales page is read-only and supports the existing legacy sales list.
 
 ## Known Limitations
-- Authentication currently uses bootstrap demo users only; there is no user-management UI, password reset, or refresh-token flow yet.
+- Password reset is admin-driven only; there is no self-service forgot-password flow.
+- JWT access tokens remain stateless, so role or enabled-status changes fully take effect after token refresh, logout/login, or access-token expiry.
 - Inventory and customer delete endpoints perform hard deletes.
 - `status`, `purity`, `metalType`, `paymentStatus`, and `paymentMethod` are stored as strings in the database, with application-level enum validation.
 - Invoice quantity scales pricing values, but the inventory model still represents one serialized jewelry item and does not track stock quantity decrementing.
@@ -235,14 +249,14 @@ Do not commit local, generated, or sensitive files such as:
 - local Postman workspace files under `.postman/` or `postman/`
 
 ## Next Recommended Steps
-1. Add user-management, password-reset, and refresh-token flows.
-2. Add pagination and sorting response contracts for large datasets.
-3. Decide whether to merge sales into invoices or keep sales as a separate workflow.
-4. Add soft delete/archive behavior for customers and inventory.
+1. Add pagination and sorting response contracts for large datasets.
+2. Add soft delete/archive behavior for customers and inventory.
+3. Add self-service password reset or invite flows if the app needs real store-user onboarding.
+4. Decide whether to merge sales into invoices or keep sales as a separate workflow.
 5. Add frontend and backend tests around role-restricted actions.
 
 Recommended commit message:
 
 ```text
-Add Flyway migrations for database schema management
+Add refresh-token auth and admin user management
 ```
