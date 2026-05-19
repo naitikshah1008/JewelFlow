@@ -17,6 +17,16 @@ public class AuthController {
         return authService.login(request);
     }
 
+    @PostMapping("/refresh")
+    public AuthResponse refresh(@Valid @RequestBody RefreshRequest request) {
+        return authService.refresh(request);
+    }
+
+    @PostMapping("/logout")
+    public void logout(@Valid @RequestBody LogoutRequest request) {
+        authService.logout(request);
+    }
+
     @GetMapping("/me")
     public CurrentUserResponse currentUser(Authentication authentication) {
         return authService.getCurrentUser(authentication.getName());
