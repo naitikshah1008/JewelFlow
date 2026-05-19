@@ -5,6 +5,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,7 +19,13 @@ class AuthServiceTest {
     private final AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
     private final AppUserRepository appUserRepository = mock(AppUserRepository.class);
     private final JwtService jwtService = mock(JwtService.class);
-    private final AuthService authService = new AuthService(authenticationManager, appUserRepository, jwtService);
+    private final RefreshTokenService refreshTokenService = mock(RefreshTokenService.class);
+    private final AuthService authService = new AuthService(
+            authenticationManager,
+            appUserRepository,
+            jwtService,
+            refreshTokenService
+    );
 
     @Test
     void loginAuthenticatesAndReturnsJwtResponse() {
@@ -37,14 +44,20 @@ class AuthServiceTest {
                 .username("admin")
                 .role(UserRole.ADMIN)
                 .build();
+        IssuedRefreshToken refreshToken = new IssuedRefreshToken(
+                "refresh-token",
+                LocalDateTime.parse("2026-05-30T20:00:00")
+        );
 
         when(appUserRepository.findByUsernameIgnoreCase("admin")).thenReturn(Optional.of(user));
         when(jwtService.issueToken(user)).thenReturn(expected);
+        when(refreshTokenService.issueToken(user)).thenReturn(refreshToken);
 
         AuthResponse response = authService.login(request);
 
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
         assertThat(response.getToken()).isEqualTo("jwt-token");
+        assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
         assertThat(response.getRole()).isEqualTo(UserRole.ADMIN);
     }
 }
