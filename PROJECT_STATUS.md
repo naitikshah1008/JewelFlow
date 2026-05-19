@@ -10,7 +10,7 @@ JewelFlow helps small and mid-sized jewelry stores manage serialized jewelry inv
 - Backend framework: Spring Boot 4.0.6
 - Backend language: Java 17 target, Lombok
 - Backend API style: REST controllers under `/api/**`
-- Backend persistence: Spring Data JPA with PostgreSQL
+- Backend persistence: Spring Data JPA with PostgreSQL and Flyway migrations
 - Database local setup: PostgreSQL 16 via Docker Compose
 - Backend build tool: Maven Wrapper (`backend/mvnw`, `backend/mvnw.cmd`)
 - Frontend: React, TypeScript, Vite
@@ -29,6 +29,7 @@ JewelFlow helps small and mid-sized jewelry stores manage serialized jewelry inv
 - `backend/src/main/java/com/jewelflow/backend/invoice`: invoice/order entity, request/response DTOs, repository, service, and controller.
 - `backend/src/main/java/com/jewelflow/backend/pricing`: pricing request/response DTOs, pricing service, and controller.
 - `backend/src/main/java/com/jewelflow/backend/sales`: sale entity, request/response DTOs, repository, service, and controller.
+- `backend/src/main/resources/db/migration`: versioned Flyway SQL migrations.
 - `backend/src/test/java/com/jewelflow/backend`: backend context and focused service tests.
 - `frontend/src/api`: frontend API client and JewelFlow endpoint functions.
 - `frontend/src/components`: reusable UI components.
@@ -66,6 +67,7 @@ JewelFlow helps small and mid-sized jewelry stores manage serialized jewelry inv
 - Backend APIs are protected by default after login.
 - Customer and inventory deletes require the `ADMIN` role.
 - Frontend login screen, token persistence, protected routing, bearer-token requests, and logout.
+- Flyway-managed initial database schema with Hibernate schema validation.
 
 ## Current API Endpoints
 
@@ -116,7 +118,9 @@ JewelFlow helps small and mid-sized jewelry stores manage serialized jewelry inv
 - Local datasource URL: `jdbc:postgresql://localhost:5432/jewelflow`
 - Local datasource username: `jewelflow_user`
 - Local datasource password: `jewelflow_pass`
-- Hibernate uses `spring.jpa.hibernate.ddl-auto=update`.
+- Hibernate uses `spring.jpa.hibernate.ddl-auto=validate`.
+- Flyway migrations run from `classpath:db/migration`.
+- `spring.flyway.baseline-on-migrate=true` lets existing local V1 schemas adopt Flyway without dropping data.
 - SQL logging is currently enabled.
 - JWT secret env var: `JWT_SECRET`
 - JWT expiry env var: `JWT_EXPIRATION_MINUTES`
@@ -215,7 +219,6 @@ Both flows remain because both existed in the backend. Version 1 frontend treats
 - Invoice quantity scales pricing values, but the inventory model still represents one serialized jewelry item and does not track stock quantity decrementing.
 - List endpoints have practical filtering but not full pagination contracts yet.
 - Dashboard date boundaries use the server-local date.
-- `ddl-auto=update` is for local demo convenience and should be replaced with migrations before production.
 - User lifecycle management is not implemented yet; bootstrap credentials are the only account provisioning path.
 - SQL logging is useful for local debugging but noisy for production.
 
@@ -232,14 +235,14 @@ Do not commit local, generated, or sensitive files such as:
 - local Postman workspace files under `.postman/` or `postman/`
 
 ## Next Recommended Steps
-1. Replace `ddl-auto=update` with migration tooling.
-2. Add user-management, password-reset, and refresh-token flows.
-3. Add pagination and sorting response contracts for large datasets.
-4. Decide whether to merge sales into invoices or keep sales as a separate workflow.
-5. Add soft delete/archive behavior for customers and inventory.
+1. Add user-management, password-reset, and refresh-token flows.
+2. Add pagination and sorting response contracts for large datasets.
+3. Decide whether to merge sales into invoices or keep sales as a separate workflow.
+4. Add soft delete/archive behavior for customers and inventory.
+5. Add frontend and backend tests around role-restricted actions.
 
 Recommended commit message:
 
 ```text
-Add JWT authentication and role-based access
+Add Flyway migrations for database schema management
 ```

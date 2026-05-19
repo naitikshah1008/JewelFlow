@@ -5,7 +5,7 @@ JewelFlow is a local-demo-ready jewelry store management system for inventory, c
 Version 1 includes a Spring Boot backend and a React TypeScript dashboard frontend connected to `http://localhost:8080`. The current branch adds the next-step JWT authentication baseline for `ADMIN` and `STAFF` users.
 
 ## Tech Stack
-- Backend: Java 17, Spring Boot 4, Spring Data JPA, Hibernate, PostgreSQL, Maven Wrapper
+- Backend: Java 17, Spring Boot 4, Spring Data JPA, Hibernate, Flyway, PostgreSQL, Maven Wrapper
 - Frontend: React, TypeScript, Vite, fetch API
 - Database: PostgreSQL 16 through Docker Compose
 - Validation: Jakarta Bean Validation plus service-level business rules
@@ -14,6 +14,7 @@ Version 1 includes a Spring Boot backend and a React TypeScript dashboard fronte
 ## Folder Structure
 - `backend/` - Spring Boot API application
 - `backend/src/main/java/com/jewelflow/backend/auth` - users, login, JWT issuing, and bootstrap demo accounts
+- `backend/src/main/resources/db/migration` - versioned Flyway database migrations
 - `frontend/` - React + TypeScript + Vite dashboard
 - `infra/` - Docker Compose PostgreSQL setup
 - `PROJECT_STATUS.md` - detailed implementation state and known limitations
@@ -110,6 +111,7 @@ npm run build
 - Backend search/filter support for inventory, customers, invoices, and sales
 - Safer invoice and sale numbers using timestamp plus random suffix instead of `count() + 1`
 - Dashboard revenue includes invoices/orders and existing sales
+- Flyway-managed database schema with Hibernate validation
 
 ## Authentication Baseline
 - JWT login endpoint at `POST /api/auth/login`
@@ -139,11 +141,9 @@ Recommended manual flow:
 - Inventory and customer deletes are still hard deletes.
 - Invoice and sales flows both exist; V1 frontend uses invoices/orders as the main billing flow and keeps sales read-only.
 - Inventory still models serialized jewelry items rather than stock quantity decrementing.
-- Hibernate `ddl-auto=update` is convenient locally but should be replaced by migrations before production.
 - List endpoints support practical filtering but not full pagination yet.
 
 ## Next Steps
-- Add production migrations.
 - Add user management, password reset, and refresh-token support.
 - Introduce soft deletes or archive flows.
 - Add pagination and sorting contracts for larger datasets.
