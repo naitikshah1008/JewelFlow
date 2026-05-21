@@ -142,13 +142,3 @@ Result: dependencies were up to date and the production build completed successf
 - Spring Security still emits a generated development password even though the API is configured for local demo access.
 - SQL logging is enabled for development visibility.
 
-## Next Planned Improvements
-
-- Add real authentication and role-based access.
-- Introduce database migrations with Flyway or Liquibase.
-- Add pagination and sorting consistently across all list endpoints.
-- Add soft deletes and audit history.
-- Clarify and potentially merge overlapping sales and invoice workflows.
-- Add inventory stock quantity support where appropriate.
-- Expand backend integration tests and add frontend component or end-to-end tests.
-- Add production deployment configuration.
