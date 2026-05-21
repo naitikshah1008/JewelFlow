@@ -5,6 +5,26 @@ export type PaymentStatus = "PAID" | "UNPAID" | "PARTIAL";
 export type PaymentMethod = "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "OTHER";
 export type OrderStatus = "ISSUED";
 export type UserRole = "ADMIN" | "STAFF";
+export type SortDirection = "ASC" | "DESC";
+
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+  sortBy?: string;
+  direction?: SortDirection;
+}
+
+export interface PageQuery {
+  page: number;
+  size: number;
+  sortBy: string;
+  direction: SortDirection;
+}
 
 export interface ApiErrorBody {
   timestamp?: string;
