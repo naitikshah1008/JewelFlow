@@ -152,8 +152,3 @@ Recommended manual flow:
 - Inventory still models serialized jewelry items rather than stock quantity decrementing.
 - List endpoints support practical filtering but not full pagination yet.
 
-## Next Steps
-- Introduce soft deletes or archive flows.
-- Add self-service password reset or invite flows if store-user onboarding needs it.
-- Add pagination and sorting contracts for larger datasets.
-- Decide whether sales should be merged into invoices or kept as a separate retail-sale workflow.
