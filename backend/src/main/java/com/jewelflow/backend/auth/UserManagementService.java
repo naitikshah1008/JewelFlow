@@ -1,15 +1,27 @@
 package com.jewelflow.backend.auth;
 
+import com.jewelflow.backend.common.PageRequestFactory;
+import com.jewelflow.backend.common.PageResponse;
 import com.jewelflow.backend.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class UserManagementService {
+
+    private static final Map<String, String> ALLOWED_SORTS = Map.of(
+            "username", "username",
+            "role", "role",
+            "enabled", "enabled",
+            "createdAt", "createdAt",
+            "updatedAt", "updatedAt"
+    );
 
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
@@ -19,6 +31,13 @@ public class UserManagementService {
                 .stream()
                 .map(UserResponse::from)
                 .toList();
+    }
+
+    public PageResponse<UserResponse> getUsersPage(Integer page, Integer size, String sortBy, String direction) {
+        Page<AppUser> users = appUserRepository.findAll(
+                PageRequestFactory.create(page, size, sortBy, direction, ALLOWED_SORTS, "username")
+        );
+        return PageResponse.from(users, UserResponse::from);
     }
 
     public UserResponse createUser(CreateUserRequest request) {

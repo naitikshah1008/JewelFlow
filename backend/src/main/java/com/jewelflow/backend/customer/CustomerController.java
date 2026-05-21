@@ -1,5 +1,6 @@
 package com.jewelflow.backend.customer;
 
+import com.jewelflow.backend.common.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,17 @@ public class CustomerController {
     @GetMapping
     public List<Customer> getAllCustomers(@RequestParam(required = false) String keyword) {
         return customerService.getAllCustomers(keyword);
+    }
+
+    @GetMapping("/page")
+    public PageResponse<Customer> getCustomersPage(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String direction
+    ) {
+        return customerService.getCustomersPage(keyword, page, size, sortBy, direction);
     }
 
     @GetMapping("/{id}")

@@ -1,14 +1,25 @@
 package com.jewelflow.backend.customer;
 
+import com.jewelflow.backend.common.PageRequestFactory;
+import com.jewelflow.backend.common.PageResponse;
 import com.jewelflow.backend.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class CustomerService {
+
+    private static final Map<String, String> ALLOWED_SORTS = Map.of(
+            "createdAt", "createdAt",
+            "fullName", "fullName",
+            "phoneNumber", "phoneNumber",
+            "city", "city",
+            "updatedAt", "updatedAt"
+    );
 
     private final CustomerRepository customerRepository;
 
@@ -33,6 +44,19 @@ public class CustomerService {
 
     public List<Customer> getAllCustomers(String keyword) {
         return customerRepository.searchCustomers(normalizeKeyword(keyword));
+    }
+
+    public PageResponse<Customer> getCustomersPage(
+            String keyword,
+            Integer page,
+            Integer size,
+            String sortBy,
+            String direction
+    ) {
+        return PageResponse.from(customerRepository.searchCustomersPage(
+                normalizeKeyword(keyword),
+                PageRequestFactory.create(page, size, sortBy, direction, ALLOWED_SORTS, "createdAt")
+        ));
     }
 
     public Customer getCustomerById(Long id) {

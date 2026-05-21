@@ -3,6 +3,7 @@ package com.jewelflow.backend.inventory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import com.jewelflow.backend.common.PageResponse;
 
 import java.util.List;
 
@@ -28,6 +29,31 @@ public class JewelleryItemController {
             @RequestParam(required = false) String keyword
     ) {
         return jewelleryItemService.getAllItems(status, category, metalType, purity, keyword);
+    }
+
+    @GetMapping("/page")
+    public PageResponse<JewelleryItem> getItemsPage(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String metalType,
+            @RequestParam(required = false) String purity,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String direction
+    ) {
+        return jewelleryItemService.getItemsPage(
+                status,
+                category,
+                metalType,
+                purity,
+                keyword,
+                page,
+                size,
+                sortBy,
+                direction
+        );
     }
 
     @GetMapping("/{id}")

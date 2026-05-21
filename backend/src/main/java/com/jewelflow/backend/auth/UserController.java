@@ -1,5 +1,6 @@
 package com.jewelflow.backend.auth;
 
+import com.jewelflow.backend.common.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,16 @@ public class UserController {
     @GetMapping
     public List<UserResponse> getUsers() {
         return userManagementService.getUsers();
+    }
+
+    @GetMapping("/page")
+    public PageResponse<UserResponse> getUsersPage(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String direction
+    ) {
+        return userManagementService.getUsersPage(page, size, sortBy, direction);
     }
 
     @PostMapping

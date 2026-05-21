@@ -1,5 +1,7 @@
 package com.jewelflow.backend.customer;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,4 +22,14 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             order by customer.createdAt desc
             """)
     List<Customer> searchCustomers(@Param("keyword") String keyword);
+
+    @Query("""
+            select customer
+            from Customer customer
+            where :keyword is null
+               or lower(customer.fullName) like :keyword
+               or lower(customer.phoneNumber) like :keyword
+               or lower(customer.email) like :keyword
+            """)
+    Page<Customer> searchCustomersPage(@Param("keyword") String keyword, Pageable pageable);
 }

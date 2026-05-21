@@ -2,6 +2,8 @@ package com.jewelflow.backend.inventory;
 
 import com.jewelflow.backend.common.ItemStatus;
 import com.jewelflow.backend.common.MetalType;
+import com.jewelflow.backend.common.PageRequestFactory;
+import com.jewelflow.backend.common.PageResponse;
 import com.jewelflow.backend.common.Purity;
 import com.jewelflow.backend.pricing.PricingRequest;
 import com.jewelflow.backend.pricing.PricingResponse;
@@ -12,10 +14,21 @@ import com.jewelflow.backend.exception.ResourceNotFoundException;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class JewelleryItemService {
+
+    private static final Map<String, String> ALLOWED_SORTS = Map.of(
+            "createdAt", "createdAt",
+            "updatedAt", "updatedAt",
+            "itemName", "itemName",
+            "category", "category",
+            "status", "status",
+            "sellingPrice", "sellingPrice",
+            "netWeight", "netWeight"
+    );
 
     private final JewelleryItemRepository repository;
     private final PricingService pricingService;
@@ -65,6 +78,32 @@ public class JewelleryItemService {
                 normalizedPurity,
                 normalizedKeyword
         );
+    }
+
+    public PageResponse<JewelleryItem> getItemsPage(
+            String status,
+            String category,
+            String metalType,
+            String purity,
+            String keyword,
+            Integer page,
+            Integer size,
+            String sortBy,
+            String direction
+    ) {
+        String normalizedStatus = normalizeStatusFilter(status);
+        String normalizedCategory = normalizeTextFilter(category);
+        String normalizedMetalType = normalizeMetalTypeFilter(metalType);
+        String normalizedPurity = normalizePurityFilter(purity);
+        String normalizedKeyword = normalizeKeyword(keyword);
+        return PageResponse.from(repository.searchItemsPage(
+                normalizedStatus,
+                normalizedCategory,
+                normalizedMetalType,
+                normalizedPurity,
+                normalizedKeyword,
+                PageRequestFactory.create(page, size, sortBy, direction, ALLOWED_SORTS, "createdAt")
+        ));
     }
 
     public JewelleryItem getItemById(Long id) {
