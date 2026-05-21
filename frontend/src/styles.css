@@ -360,6 +360,34 @@ textarea.control {
   overflow-x: auto;
 }
 
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 14px;
+  color: #65736b;
+  font-size: 14px;
+}
+
+.pagination-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #33443a;
+  font-weight: 650;
+}
+
+.pagination-size .control {
+  width: 92px;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -523,6 +551,16 @@ td small {
 
   .inline-controls {
     grid-template-columns: 1fr;
+  }
+
+  .pagination-bar,
+  .pagination-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pagination-size {
+    justify-content: space-between;
   }
 
   .button {

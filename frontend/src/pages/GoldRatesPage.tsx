@@ -6,12 +6,15 @@ import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { Field, SelectInput, TextArea, TextInput } from "../components/FormControls";
 import { Loading } from "../components/Loading";
+import { PaginationControls } from "../components/PaginationControls";
 import { Table } from "../components/Table";
 import type { GoldRate, GoldRateRequest } from "../types";
 import { formatCurrency, formatDate, formatDateTime } from "../utils/format";
+import { createPageQuery, emptyPage, toPageParams } from "../utils/pagination";
 
 export function GoldRatesPage() {
-  const [rates, setRates] = useState<GoldRate[]>([]);
+  const [ratesPage, setRatesPage] = useState(() => emptyPage<GoldRate>(createPageQuery("rateDate")));
+  const [pageQuery, setPageQuery] = useState(() => createPageQuery("rateDate"));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -28,16 +31,24 @@ export function GoldRatesPage() {
   function loadRates() {
     setLoading(true);
     api
-      .goldRates()
-      .then(setRates)
+      .goldRatesPage(toPageParams(pageQuery))
+      .then(setRatesPage)
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
   }
 
-  useEffect(loadRates, []);
+  useEffect(loadRates, [pageQuery]);
 
   function update(field: keyof typeof form, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function updatePageQuery(field: keyof typeof pageQuery, value: string | number) {
+    setPageQuery((current) => ({
+      ...current,
+      page: field === "page" ? Number(value) : 0,
+      [field]: value
+    }));
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -106,6 +117,21 @@ export function GoldRatesPage() {
           <Field label="Notes">
             <TextArea value={form.notes} onChange={(event) => update("notes", event.target.value)} />
           </Field>
+          <Field label="Sort By">
+            <SelectInput value={pageQuery.sortBy} onChange={(event) => updatePageQuery("sortBy", event.target.value)}>
+              <option value="rateDate">Rate Date</option>
+              <option value="createdAt">Created</option>
+              <option value="metalType">Metal</option>
+              <option value="purity">Purity</option>
+              <option value="ratePerGram">Rate</option>
+            </SelectInput>
+          </Field>
+          <Field label="Direction">
+            <SelectInput value={pageQuery.direction} onChange={(event) => updatePageQuery("direction", event.target.value)}>
+              <option value="DESC">Descending</option>
+              <option value="ASC">Ascending</option>
+            </SelectInput>
+          </Field>
           <div className="form-actions">
             <Button type="submit" disabled={saving}>
               {saving ? "Saving" : "Save Rate"}
@@ -120,10 +146,10 @@ export function GoldRatesPage() {
         <Card>
           <Table
             columns={["Metal", "Purity", "Rate", "Date", "Source", "Created"]}
-            empty={rates.length === 0}
+            empty={ratesPage.content.length === 0}
             emptyTitle="No gold rates found"
           >
-            {rates.map((rate) => (
+            {ratesPage.content.map((rate) => (
               <tr key={rate.id}>
                 <td>{rate.metalType}</td>
                 <td>{rate.purity}</td>
@@ -134,6 +160,11 @@ export function GoldRatesPage() {
               </tr>
             ))}
           </Table>
+          <PaginationControls
+            page={ratesPage}
+            onPageChange={(page) => updatePageQuery("page", page)}
+            onPageSizeChange={(size) => updatePageQuery("size", size)}
+          />
         </Card>
       )}
     </div>

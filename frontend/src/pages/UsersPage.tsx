@@ -6,14 +6,17 @@ import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { Field, SelectInput, TextInput } from "../components/FormControls";
 import { Loading } from "../components/Loading";
+import { PaginationControls } from "../components/PaginationControls";
 import { Table } from "../components/Table";
 import type { CreateUserRequest, UserAccount, UserRole } from "../types";
 import { formatDateTime } from "../utils/format";
+import { createPageQuery, emptyPage, toPageParams } from "../utils/pagination";
 
 const roleOptions: UserRole[] = ["ADMIN", "STAFF"];
 
 export function UsersPage() {
-  const [users, setUsers] = useState<UserAccount[]>([]);
+  const [usersPage, setUsersPage] = useState(() => emptyPage<UserAccount>(createPageQuery("username", "ASC")));
+  const [pageQuery, setPageQuery] = useState(() => createPageQuery("username", "ASC"));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [updatingUserId, setUpdatingUserId] = useState<number | null>(null);
@@ -29,13 +32,13 @@ export function UsersPage() {
   function loadUsers() {
     setLoading(true);
     api
-      .users()
-      .then(setUsers)
+      .usersPage(toPageParams(pageQuery))
+      .then(setUsersPage)
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
   }
 
-  useEffect(loadUsers, []);
+  useEffect(loadUsers, [pageQuery]);
 
   function setFormValue<K extends keyof CreateUserRequest>(field: K, value: CreateUserRequest[K]) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -46,6 +49,14 @@ export function UsersPage() {
       return Object.values(err.fieldErrors).join(", ");
     }
     return err instanceof Error ? err.message : fallback;
+  }
+
+  function updatePageQuery(field: keyof typeof pageQuery, value: string | number) {
+    setPageQuery((current) => ({
+      ...current,
+      page: field === "page" ? Number(value) : 0,
+      [field]: value
+    }));
   }
 
   async function handleCreate(event: FormEvent) {
@@ -63,10 +74,10 @@ export function UsersPage() {
 
     setSaving(true);
     try {
-      const created = await api.createUser({ ...form, username: form.username.trim() });
-      setUsers((current) => [...current, created].sort((a, b) => a.username.localeCompare(b.username)));
+      await api.createUser({ ...form, username: form.username.trim() });
       setForm({ username: "", password: "", role: "STAFF" });
       setSuccess("User created.");
+      setPageQuery((current) => ({ ...current, page: 0 }));
     } catch (err) {
       setError(readError(err, "Unable to create user."));
     } finally {
@@ -80,7 +91,10 @@ export function UsersPage() {
     setUpdatingUserId(user.id);
     try {
       const updated = await api.updateUser(user.id, next);
-      setUsers((current) => current.map((entry) => (entry.id === updated.id ? updated : entry)));
+      setUsersPage((current) => ({
+        ...current,
+        content: current.content.map((entry) => (entry.id === updated.id ? updated : entry))
+      }));
       setSuccess("User updated.");
     } catch (err) {
       setError(readError(err, "Unable to update user."));
@@ -141,6 +155,21 @@ export function UsersPage() {
               ))}
             </SelectInput>
           </Field>
+          <Field label="Sort Users By">
+            <SelectInput value={pageQuery.sortBy} onChange={(event) => updatePageQuery("sortBy", event.target.value)}>
+              <option value="username">Username</option>
+              <option value="role">Role</option>
+              <option value="enabled">Status</option>
+              <option value="createdAt">Created</option>
+              <option value="updatedAt">Updated</option>
+            </SelectInput>
+          </Field>
+          <Field label="Direction">
+            <SelectInput value={pageQuery.direction} onChange={(event) => updatePageQuery("direction", event.target.value)}>
+              <option value="ASC">Ascending</option>
+              <option value="DESC">Descending</option>
+            </SelectInput>
+          </Field>
           <div className="form-actions">
             <Button type="submit" disabled={saving}>
               {saving ? "Creating" : "Create User"}
@@ -155,10 +184,10 @@ export function UsersPage() {
         <Card title="User Accounts">
           <Table
             columns={["User", "Role", "Status", "Created", "Reset Password"]}
-            empty={users.length === 0}
+            empty={usersPage.content.length === 0}
             emptyTitle="No users found"
           >
-            {users.map((user) => (
+            {usersPage.content.map((user) => (
               <tr key={user.id}>
                 <td>
                   <strong>{user.username}</strong>
@@ -209,6 +238,11 @@ export function UsersPage() {
               </tr>
             ))}
           </Table>
+          <PaginationControls
+            page={usersPage}
+            onPageChange={(page) => updatePageQuery("page", page)}
+            onPageSizeChange={(size) => updatePageQuery("size", size)}
+          />
         </Card>
       )}
     </div>
