@@ -1,6 +1,8 @@
 package com.jewelflow.backend.goldrate;
 
 import com.jewelflow.backend.common.MetalType;
+import com.jewelflow.backend.common.PageRequestFactory;
+import com.jewelflow.backend.common.PageResponse;
 import com.jewelflow.backend.common.Purity;
 import com.jewelflow.backend.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -8,10 +10,19 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class GoldRateService {
+
+    private static final Map<String, String> ALLOWED_SORTS = Map.of(
+            "rateDate", "rateDate",
+            "createdAt", "createdAt",
+            "metalType", "metalType",
+            "purity", "purity",
+            "ratePerGram", "ratePerGram"
+    );
 
     private final GoldRateRepository goldRateRepository;
 
@@ -45,6 +56,26 @@ public class GoldRateService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    public PageResponse<GoldRateResponse> getGoldRatesPage(
+            String metalType,
+            String purity,
+            Integer page,
+            Integer size,
+            String sortBy,
+            String direction
+    ) {
+        String normalizedMetalType = metalType == null || metalType.isBlank() ? null : MetalType.from(metalType).name();
+        String normalizedPurity = purity == null || purity.isBlank() ? null : Purity.from(purity).getCode().toUpperCase();
+        return PageResponse.from(
+                goldRateRepository.searchGoldRatesPage(
+                        normalizedMetalType,
+                        normalizedPurity,
+                        PageRequestFactory.create(page, size, sortBy, direction, ALLOWED_SORTS, "rateDate")
+                ),
+                this::toResponse
+        );
     }
 
     public GoldRateResponse getGoldRateById(Long id) {

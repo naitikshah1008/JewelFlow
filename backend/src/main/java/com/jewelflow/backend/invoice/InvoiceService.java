@@ -2,6 +2,8 @@ package com.jewelflow.backend.invoice;
 
 import com.jewelflow.backend.common.ItemStatus;
 import com.jewelflow.backend.common.OrderStatus;
+import com.jewelflow.backend.common.PageRequestFactory;
+import com.jewelflow.backend.common.PageResponse;
 import com.jewelflow.backend.common.PaymentMethod;
 import com.jewelflow.backend.common.PaymentStatus;
 import com.jewelflow.backend.customer.Customer;
@@ -23,6 +25,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -31,6 +34,14 @@ public class InvoiceService {
 
     private static final DateTimeFormatter INVOICE_NUMBER_TIMESTAMP_FORMAT =
             DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+    private static final Map<String, String> ALLOWED_SORTS = Map.of(
+            "invoiceDate", "invoiceDate",
+            "invoiceNumber", "invoiceNumber",
+            "customerName", "customerName",
+            "finalAmount", "finalAmount",
+            "paymentStatus", "paymentStatus",
+            "createdAt", "createdAt"
+    );
 
     private final InvoiceRepository invoiceRepository;
     private final CustomerService customerService;
@@ -106,6 +117,32 @@ public class InvoiceService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    public PageResponse<InvoiceResponse> getInvoicesPage(
+            String customerName,
+            String paymentStatus,
+            String orderStatus,
+            String keyword,
+            Integer page,
+            Integer size,
+            String sortBy,
+            String direction
+    ) {
+        String normalizedPaymentStatus = normalizePaymentStatusFilter(paymentStatus);
+        String normalizedOrderStatus = normalizeOrderStatusFilter(orderStatus);
+        String normalizedCustomerName = normalizeLikeFilter(customerName);
+        String normalizedKeyword = normalizeLikeFilter(keyword);
+        return PageResponse.from(
+                invoiceRepository.searchInvoicesPage(
+                        normalizedCustomerName,
+                        normalizedPaymentStatus,
+                        normalizedOrderStatus,
+                        normalizedKeyword,
+                        PageRequestFactory.create(page, size, sortBy, direction, ALLOWED_SORTS, "invoiceDate")
+                ),
+                this::toResponse
+        );
     }
 
     public InvoiceResponse getInvoiceById(Long id) {

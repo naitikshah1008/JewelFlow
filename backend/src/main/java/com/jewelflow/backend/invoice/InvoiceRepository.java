@@ -1,5 +1,7 @@
 package com.jewelflow.backend.invoice;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -50,5 +52,29 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
             @Param("paymentStatus") String paymentStatus,
             @Param("orderStatus") String orderStatus,
             @Param("keyword") String keyword
+    );
+
+    @Query("""
+            select invoice
+            from Invoice invoice
+              where (:customerName is null or lower(invoice.customerName) like :customerName)
+              and (:paymentStatus is null or upper(invoice.paymentStatus) = :paymentStatus)
+              and (:orderStatus is null or upper(invoice.orderStatus) = :orderStatus)
+              and (
+                    :keyword is null
+                    or lower(invoice.invoiceNumber) like :keyword
+                    or lower(invoice.customerName) like :keyword
+                    or lower(invoice.customerPhoneNumber) like :keyword
+                    or lower(invoice.itemName) like :keyword
+                    or lower(invoice.paymentStatus) like :keyword
+                    or lower(invoice.orderStatus) like :keyword
+              )
+            """)
+    Page<Invoice> searchInvoicesPage(
+            @Param("customerName") String customerName,
+            @Param("paymentStatus") String paymentStatus,
+            @Param("orderStatus") String orderStatus,
+            @Param("keyword") String keyword,
+            Pageable pageable
     );
 }

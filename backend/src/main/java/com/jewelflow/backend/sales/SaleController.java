@@ -1,5 +1,6 @@
 package com.jewelflow.backend.sales;
 
+import com.jewelflow.backend.common.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,19 @@ public class SaleController {
             @RequestParam(required = false) String keyword
     ) {
         return saleService.getAllSales(customerName, paymentStatus, keyword);
+    }
+
+    @GetMapping("/page")
+    public PageResponse<SaleResponse> getSalesPage(
+            @RequestParam(required = false) String customerName,
+            @RequestParam(required = false) String paymentStatus,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String direction
+    ) {
+        return saleService.getSalesPage(customerName, paymentStatus, keyword, page, size, sortBy, direction);
     }
 
     @GetMapping("/{id}")

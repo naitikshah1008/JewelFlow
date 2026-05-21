@@ -1,5 +1,6 @@
 package com.jewelflow.backend.goldrate;
 
+import com.jewelflow.backend.common.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +29,18 @@ public class GoldRateController {
             return goldRateService.getGoldRatesByMetalAndPurity(metalType, purity);
         }
         return goldRateService.getAllGoldRates();
+    }
+
+    @GetMapping("/page")
+    public PageResponse<GoldRateResponse> getGoldRatesPage(
+            @RequestParam(required = false) String metalType,
+            @RequestParam(required = false) String purity,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String direction
+    ) {
+        return goldRateService.getGoldRatesPage(metalType, purity, page, size, sortBy, direction);
     }
 
     @GetMapping("/latest")

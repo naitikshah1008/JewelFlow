@@ -1,5 +1,7 @@
 package com.jewelflow.backend.sales;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -47,5 +49,26 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
             @Param("customerName") String customerName,
             @Param("paymentStatus") String paymentStatus,
             @Param("keyword") String keyword
+    );
+
+    @Query("""
+            select sale
+            from Sale sale
+            where (:customerName is null or lower(sale.customerName) like :customerName)
+              and (:paymentStatus is null or upper(sale.paymentStatus) = :paymentStatus)
+              and (
+                    :keyword is null
+                    or lower(sale.invoiceNumber) like :keyword
+                    or lower(sale.customerName) like :keyword
+                    or lower(sale.customerPhoneNumber) like :keyword
+                    or lower(sale.itemName) like :keyword
+                    or lower(sale.paymentStatus) like :keyword
+              )
+            """)
+    Page<Sale> searchSalesPage(
+            @Param("customerName") String customerName,
+            @Param("paymentStatus") String paymentStatus,
+            @Param("keyword") String keyword,
+            Pageable pageable
     );
 }

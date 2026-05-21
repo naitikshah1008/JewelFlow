@@ -1,6 +1,8 @@
 package com.jewelflow.backend.sales;
 
 import com.jewelflow.backend.common.ItemStatus;
+import com.jewelflow.backend.common.PageRequestFactory;
+import com.jewelflow.backend.common.PageResponse;
 import com.jewelflow.backend.common.PaymentMethod;
 import com.jewelflow.backend.common.PaymentStatus;
 import com.jewelflow.backend.customer.Customer;
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -25,6 +28,14 @@ public class SaleService {
 
     private static final DateTimeFormatter SALE_NUMBER_TIMESTAMP_FORMAT =
             DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+    private static final Map<String, String> ALLOWED_SORTS = Map.of(
+            "saleDate", "saleDate",
+            "invoiceNumber", "invoiceNumber",
+            "customerName", "customerName",
+            "finalAmount", "finalAmount",
+            "paymentStatus", "paymentStatus",
+            "createdAt", "createdAt"
+    );
 
     private final SaleRepository saleRepository;
     private final CustomerService customerService;
@@ -87,6 +98,29 @@ public class SaleService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    public PageResponse<SaleResponse> getSalesPage(
+            String customerName,
+            String paymentStatus,
+            String keyword,
+            Integer page,
+            Integer size,
+            String sortBy,
+            String direction
+    ) {
+        String normalizedCustomerName = normalizeLikeFilter(customerName);
+        String normalizedPaymentStatus = normalizePaymentStatusFilter(paymentStatus);
+        String normalizedKeyword = normalizeLikeFilter(keyword);
+        return PageResponse.from(
+                saleRepository.searchSalesPage(
+                        normalizedCustomerName,
+                        normalizedPaymentStatus,
+                        normalizedKeyword,
+                        PageRequestFactory.create(page, size, sortBy, direction, ALLOWED_SORTS, "saleDate")
+                ),
+                this::toResponse
+        );
     }
 
     public SaleResponse getSaleById(Long id) {
