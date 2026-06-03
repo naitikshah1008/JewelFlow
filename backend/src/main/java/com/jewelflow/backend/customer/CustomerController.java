@@ -21,8 +21,11 @@ public class CustomerController {
     }
 
     @GetMapping
-    public List<Customer> getAllCustomers(@RequestParam(required = false) String keyword) {
-        return customerService.getAllCustomers(keyword);
+    public List<Customer> getAllCustomers(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "false") boolean includeArchived
+    ) {
+        return customerService.getAllCustomers(keyword, includeArchived);
     }
 
     @GetMapping("/page")
@@ -31,9 +34,10 @@ public class CustomerController {
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) String sortBy,
-            @RequestParam(required = false) String direction
+            @RequestParam(required = false) String direction,
+            @RequestParam(defaultValue = "false") boolean includeArchived
     ) {
-        return customerService.getCustomersPage(keyword, page, size, sortBy, direction);
+        return customerService.getCustomersPage(keyword, includeArchived, page, size, sortBy, direction);
     }
 
     @GetMapping("/{id}")
@@ -52,5 +56,10 @@ public class CustomerController {
     @DeleteMapping("/{id}")
     public void deleteCustomer(@PathVariable Long id) {
         customerService.deleteCustomer(id);
+    }
+
+    @PostMapping("/{id}/restore")
+    public Customer restoreCustomer(@PathVariable Long id) {
+        return customerService.restoreCustomer(id);
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.jewelflow.backend.exception.ResourceNotFoundException;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -62,10 +63,21 @@ public class JewelleryItemService {
     }
 
     public List<JewelleryItem> getAllItems() {
-        return getAllItems(null, null, null, null, null);
+        return getAllItems(null, null, null, null, null, false);
     }
 
     public List<JewelleryItem> getAllItems(String status, String category, String metalType, String purity, String keyword) {
+        return getAllItems(status, category, metalType, purity, keyword, false);
+    }
+
+    public List<JewelleryItem> getAllItems(
+            String status,
+            String category,
+            String metalType,
+            String purity,
+            String keyword,
+            boolean includeArchived
+    ) {
         String normalizedStatus = normalizeStatusFilter(status);
         String normalizedCategory = normalizeTextFilter(category);
         String normalizedMetalType = normalizeMetalTypeFilter(metalType);
@@ -76,7 +88,8 @@ public class JewelleryItemService {
                 normalizedCategory,
                 normalizedMetalType,
                 normalizedPurity,
-                normalizedKeyword
+                normalizedKeyword,
+                includeArchived
         );
     }
 
@@ -86,6 +99,7 @@ public class JewelleryItemService {
             String metalType,
             String purity,
             String keyword,
+            boolean includeArchived,
             Integer page,
             Integer size,
             String sortBy,
@@ -102,6 +116,7 @@ public class JewelleryItemService {
                 normalizedMetalType,
                 normalizedPurity,
                 normalizedKeyword,
+                includeArchived,
                 PageRequestFactory.create(page, size, sortBy, direction, ALLOWED_SORTS, "createdAt")
         ));
     }
@@ -139,7 +154,16 @@ public class JewelleryItemService {
 
     public void deleteItem(Long id) {
         JewelleryItem item = getItemById(id);
-        repository.delete(item);
+        item.setArchived(true);
+        item.setArchivedAt(LocalDateTime.now());
+        repository.save(item);
+    }
+
+    public JewelleryItem restoreItem(Long id) {
+        JewelleryItem item = getItemById(id);
+        item.setArchived(false);
+        item.setArchivedAt(null);
+        return repository.save(item);
     }
 
     private void validateWeightRules(JewelleryItemRequest request) {

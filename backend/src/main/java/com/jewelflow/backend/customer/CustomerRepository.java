@@ -12,24 +12,39 @@ import java.util.Optional;
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findByPhoneNumber(String phoneNumber);
 
-    @Query("""
-            select customer
-            from Customer customer
-            where :keyword is null
-               or lower(customer.fullName) like :keyword
-               or lower(customer.phoneNumber) like :keyword
-               or lower(customer.email) like :keyword
-            order by customer.createdAt desc
-            """)
-    List<Customer> searchCustomers(@Param("keyword") String keyword);
+    long countByArchivedFalse();
 
     @Query("""
             select customer
             from Customer customer
-            where :keyword is null
-               or lower(customer.fullName) like :keyword
-               or lower(customer.phoneNumber) like :keyword
-               or lower(customer.email) like :keyword
+            where (:includeArchived = true or customer.archived = false)
+              and (
+                    :keyword is null
+                    or lower(customer.fullName) like :keyword
+                    or lower(customer.phoneNumber) like :keyword
+                    or lower(customer.email) like :keyword
+              )
+            order by customer.createdAt desc
             """)
-    Page<Customer> searchCustomersPage(@Param("keyword") String keyword, Pageable pageable);
+    List<Customer> searchCustomers(
+            @Param("keyword") String keyword,
+            @Param("includeArchived") boolean includeArchived
+    );
+
+    @Query("""
+            select customer
+            from Customer customer
+            where (:includeArchived = true or customer.archived = false)
+              and (
+                    :keyword is null
+                    or lower(customer.fullName) like :keyword
+                    or lower(customer.phoneNumber) like :keyword
+                    or lower(customer.email) like :keyword
+              )
+            """)
+    Page<Customer> searchCustomersPage(
+            @Param("keyword") String keyword,
+            @Param("includeArchived") boolean includeArchived,
+            Pageable pageable
+    );
 }

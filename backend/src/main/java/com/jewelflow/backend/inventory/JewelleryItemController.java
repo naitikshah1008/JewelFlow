@@ -26,9 +26,10 @@ public class JewelleryItemController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String metalType,
             @RequestParam(required = false) String purity,
-            @RequestParam(required = false) String keyword
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "false") boolean includeArchived
     ) {
-        return jewelleryItemService.getAllItems(status, category, metalType, purity, keyword);
+        return jewelleryItemService.getAllItems(status, category, metalType, purity, keyword, includeArchived);
     }
 
     @GetMapping("/page")
@@ -41,7 +42,8 @@ public class JewelleryItemController {
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) String sortBy,
-            @RequestParam(required = false) String direction
+            @RequestParam(required = false) String direction,
+            @RequestParam(defaultValue = "false") boolean includeArchived
     ) {
         return jewelleryItemService.getItemsPage(
                 status,
@@ -49,6 +51,7 @@ public class JewelleryItemController {
                 metalType,
                 purity,
                 keyword,
+                includeArchived,
                 page,
                 size,
                 sortBy,
@@ -72,5 +75,10 @@ public class JewelleryItemController {
     @DeleteMapping("/{id}")
     public void deleteItem(@PathVariable Long id) {
         jewelleryItemService.deleteItem(id);
+    }
+
+    @PostMapping("/{id}/restore")
+    public JewelleryItem restoreItem(@PathVariable Long id) {
+        return jewelleryItemService.restoreItem(id);
     }
 }

@@ -6,6 +6,7 @@ import com.jewelflow.backend.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -39,15 +40,20 @@ public class CustomerService {
     }
 
     public List<Customer> getAllCustomers() {
-        return getAllCustomers(null);
+        return getAllCustomers(null, false);
     }
 
     public List<Customer> getAllCustomers(String keyword) {
-        return customerRepository.searchCustomers(normalizeKeyword(keyword));
+        return getAllCustomers(keyword, false);
+    }
+
+    public List<Customer> getAllCustomers(String keyword, boolean includeArchived) {
+        return customerRepository.searchCustomers(normalizeKeyword(keyword), includeArchived);
     }
 
     public PageResponse<Customer> getCustomersPage(
             String keyword,
+            boolean includeArchived,
             Integer page,
             Integer size,
             String sortBy,
@@ -55,6 +61,7 @@ public class CustomerService {
     ) {
         return PageResponse.from(customerRepository.searchCustomersPage(
                 normalizeKeyword(keyword),
+                includeArchived,
                 PageRequestFactory.create(page, size, sortBy, direction, ALLOWED_SORTS, "createdAt")
         ));
     }
@@ -80,7 +87,16 @@ public class CustomerService {
 
     public void deleteCustomer(Long id) {
         Customer customer = getCustomerById(id);
-        customerRepository.delete(customer);
+        customer.setArchived(true);
+        customer.setArchivedAt(LocalDateTime.now());
+        customerRepository.save(customer);
+    }
+
+    public Customer restoreCustomer(Long id) {
+        Customer customer = getCustomerById(id);
+        customer.setArchived(false);
+        customer.setArchivedAt(null);
+        return customerRepository.save(customer);
     }
 
     private void ensurePhoneNumberIsAvailable(String phoneNumber, Long currentCustomerId) {

@@ -13,16 +13,21 @@ public interface JewelleryItemRepository extends JpaRepository<JewelleryItem, Lo
 
     long countByStatusIgnoreCase(String status);
 
-    @Query("select coalesce(sum(item.sellingPrice), 0) from JewelleryItem item where item.status is null or upper(item.status) <> 'SOLD'")
+    long countByArchivedFalse();
+
+    long countByStatusIgnoreCaseAndArchivedFalse(String status);
+
+    @Query("select coalesce(sum(item.sellingPrice), 0) from JewelleryItem item where item.archived = false and (item.status is null or upper(item.status) <> 'SOLD')")
     BigDecimal sumActiveInventoryValue();
 
-    @Query("select coalesce(sum(item.sellingPrice), 0) from JewelleryItem item where upper(item.status) = upper(:status)")
+    @Query("select coalesce(sum(item.sellingPrice), 0) from JewelleryItem item where item.archived = false and upper(item.status) = upper(:status)")
     BigDecimal sumInventoryValueByStatus(@Param("status") String status);
 
     @Query("""
             select item
             from JewelleryItem item
-            where (:status is null or upper(item.status) = :status)
+            where (:includeArchived = true or item.archived = false)
+              and (:status is null or upper(item.status) = :status)
               and (:category is null or upper(item.category) = :category)
               and (:metalType is null or upper(item.metalType) = :metalType)
               and (:purity is null or upper(item.purity) = :purity)
@@ -41,13 +46,15 @@ public interface JewelleryItemRepository extends JpaRepository<JewelleryItem, Lo
             @Param("category") String category,
             @Param("metalType") String metalType,
             @Param("purity") String purity,
-            @Param("keyword") String keyword
+            @Param("keyword") String keyword,
+            @Param("includeArchived") boolean includeArchived
     );
 
     @Query("""
             select item
             from JewelleryItem item
-            where (:status is null or upper(item.status) = :status)
+            where (:includeArchived = true or item.archived = false)
+              and (:status is null or upper(item.status) = :status)
               and (:category is null or upper(item.category) = :category)
               and (:metalType is null or upper(item.metalType) = :metalType)
               and (:purity is null or upper(item.purity) = :purity)
@@ -66,6 +73,7 @@ public interface JewelleryItemRepository extends JpaRepository<JewelleryItem, Lo
             @Param("metalType") String metalType,
             @Param("purity") String purity,
             @Param("keyword") String keyword,
+            @Param("includeArchived") boolean includeArchived,
             Pageable pageable
     );
 }

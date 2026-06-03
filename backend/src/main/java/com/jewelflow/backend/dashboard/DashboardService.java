@@ -41,11 +41,11 @@ public class DashboardService {
         BigDecimal monthlyInvoiceRevenue = invoiceRepository.sumRevenueBetween(monthStart, nextMonthStart);
 
         return DashboardSummaryResponse.builder()
-                .totalCustomers(customerRepository.count())
-                .totalInventoryItems(jewelleryItemRepository.count())
-                .availableItems(jewelleryItemRepository.countByStatusIgnoreCase(ItemStatus.AVAILABLE.name()))
-                .reservedItems(jewelleryItemRepository.countByStatusIgnoreCase(ItemStatus.RESERVED.name()))
-                .soldItems(jewelleryItemRepository.countByStatusIgnoreCase(ItemStatus.SOLD.name()))
+                .totalCustomers(customerRepository.countByArchivedFalse())
+                .totalInventoryItems(jewelleryItemRepository.countByArchivedFalse())
+                .availableItems(jewelleryItemRepository.countByStatusIgnoreCaseAndArchivedFalse(ItemStatus.AVAILABLE.name()))
+                .reservedItems(jewelleryItemRepository.countByStatusIgnoreCaseAndArchivedFalse(ItemStatus.RESERVED.name()))
+                .soldItems(jewelleryItemRepository.countByStatusIgnoreCaseAndArchivedFalse(ItemStatus.SOLD.name()))
                 .activeInventoryValue(jewelleryItemRepository.sumActiveInventoryValue())
                 .availableInventoryValue(jewelleryItemRepository.sumInventoryValueByStatus(ItemStatus.AVAILABLE.name()))
                 .reservedInventoryValue(jewelleryItemRepository.sumInventoryValueByStatus(ItemStatus.RESERVED.name()))
