@@ -4,8 +4,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class CustomerServiceTest {
@@ -30,5 +33,23 @@ class CustomerServiceTest {
         assertThatThrownBy(() -> customerService.createCustomer(request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Customer already exists with phone number: 9876543210");
+    }
+
+    @Test
+    void deleteCustomerArchivesInsteadOfDeleting() {
+        Customer customer = Customer.builder()
+                .id(1L)
+                .fullName("Demo Customer")
+                .phoneNumber("9876543210")
+                .build();
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
+        when(customerRepository.save(customer)).thenReturn(customer);
+
+        customerService.deleteCustomer(1L);
+
+        assertThat(customer.isArchived()).isTrue();
+        assertThat(customer.getArchivedAt()).isNotNull();
+        verify(customerRepository).save(customer);
+        verify(customerRepository, never()).delete(customer);
     }
 }

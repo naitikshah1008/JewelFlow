@@ -30,11 +30,11 @@ class DashboardServiceTest {
 
     @Test
     void getSummaryCombinesSaleAndInvoiceRevenue() {
-        when(customerRepository.count()).thenReturn(3L);
-        when(jewelleryItemRepository.count()).thenReturn(7L);
-        when(jewelleryItemRepository.countByStatusIgnoreCase("AVAILABLE")).thenReturn(4L);
-        when(jewelleryItemRepository.countByStatusIgnoreCase("RESERVED")).thenReturn(1L);
-        when(jewelleryItemRepository.countByStatusIgnoreCase("SOLD")).thenReturn(2L);
+        when(customerRepository.countByArchivedFalse()).thenReturn(3L);
+        when(jewelleryItemRepository.countByArchivedFalse()).thenReturn(7L);
+        when(jewelleryItemRepository.countByStatusIgnoreCaseAndArchivedFalse("AVAILABLE")).thenReturn(4L);
+        when(jewelleryItemRepository.countByStatusIgnoreCaseAndArchivedFalse("RESERVED")).thenReturn(1L);
+        when(jewelleryItemRepository.countByStatusIgnoreCaseAndArchivedFalse("SOLD")).thenReturn(2L);
         when(jewelleryItemRepository.sumActiveInventoryValue()).thenReturn(BigDecimal.valueOf(100000));
         when(jewelleryItemRepository.sumInventoryValueByStatus("AVAILABLE")).thenReturn(BigDecimal.valueOf(80000));
         when(jewelleryItemRepository.sumInventoryValueByStatus("RESERVED")).thenReturn(BigDecimal.valueOf(20000));

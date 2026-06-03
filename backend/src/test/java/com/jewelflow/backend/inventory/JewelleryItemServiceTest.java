@@ -5,11 +5,14 @@ import com.jewelflow.backend.pricing.PricingResponse;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class JewelleryItemServiceTest {
@@ -58,6 +61,24 @@ class JewelleryItemServiceTest {
         assertThat(item.getTaxAmount()).isEqualByComparingTo("1743.75");
         assertThat(item.getSellingPrice()).isEqualByComparingTo("59868.75");
         assertThat(item.getStatus()).isEqualTo("AVAILABLE");
+    }
+
+    @Test
+    void deleteItemArchivesInsteadOfDeleting() {
+        JewelleryItem item = JewelleryItem.builder()
+                .id(1L)
+                .itemName("Gold Ring")
+                .status("AVAILABLE")
+                .build();
+        when(repository.findById(1L)).thenReturn(Optional.of(item));
+        when(repository.save(item)).thenReturn(item);
+
+        jewelleryItemService.deleteItem(1L);
+
+        assertThat(item.isArchived()).isTrue();
+        assertThat(item.getArchivedAt()).isNotNull();
+        verify(repository).save(item);
+        verify(repository, never()).delete(item);
     }
 
     private JewelleryItemRequest baseRequest() {
