@@ -32,6 +32,11 @@ public class Customer {
 
     private String notes;
 
+    @Builder.Default
+    private boolean archived = false;
+
+    private LocalDateTime archivedAt;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
