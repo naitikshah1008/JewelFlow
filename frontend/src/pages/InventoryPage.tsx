@@ -18,6 +18,8 @@ interface InventoryPageProps {
 export function InventoryPage({ onNavigate }: InventoryPageProps) {
   const [itemsPage, setItemsPage] = useState(() => emptyPage<JewelleryItem>(createPageQuery("createdAt")));
   const [pageQuery, setPageQuery] = useState(() => createPageQuery("createdAt"));
+  const [includeArchived, setIncludeArchived] = useState("false");
+  const [refreshKey, setRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filters, setFilters] = useState({
@@ -30,12 +32,13 @@ export function InventoryPage({ onNavigate }: InventoryPageProps) {
 
   useEffect(() => {
     setLoading(true);
+    setError("");
     api
-      .itemsPage({ ...filters, ...toPageParams(pageQuery) })
+      .itemsPage({ ...filters, includeArchived, ...toPageParams(pageQuery) })
       .then(setItemsPage)
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [filters, pageQuery]);
+  }, [filters, includeArchived, pageQuery, refreshKey]);
 
   function updateFilter(field: keyof typeof filters, value: string) {
     setFilters((current) => ({ ...current, [field]: value }));
@@ -48,6 +51,34 @@ export function InventoryPage({ onNavigate }: InventoryPageProps) {
       page: field === "page" ? Number(value) : 0,
       [field]: value
     }));
+  }
+
+  function updateArchiveFilter(value: string) {
+    setIncludeArchived(value);
+    setPageQuery((current) => resetPage(current));
+  }
+
+  async function archiveItem(item: JewelleryItem) {
+    if (!window.confirm(`Archive ${item.itemName}?`)) {
+      return;
+    }
+    try {
+      setError("");
+      await api.archiveItem(item.id);
+      setRefreshKey((current) => current + 1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to archive item");
+    }
+  }
+
+  async function restoreItem(item: JewelleryItem) {
+    try {
+      setError("");
+      await api.restoreItem(item.id);
+      setRefreshKey((current) => current + 1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to restore item");
+    }
   }
 
   return (
@@ -115,6 +146,12 @@ export function InventoryPage({ onNavigate }: InventoryPageProps) {
               <option value="ASC">Ascending</option>
             </SelectInput>
           </Field>
+          <Field label="Archived">
+            <SelectInput value={includeArchived} onChange={(event) => updateArchiveFilter(event.target.value)}>
+              <option value="false">Active only</option>
+              <option value="true">Include archived</option>
+            </SelectInput>
+          </Field>
         </div>
       </Card>
 
@@ -132,7 +169,7 @@ export function InventoryPage({ onNavigate }: InventoryPageProps) {
               <tr key={item.id}>
                 <td>
                   <strong>{item.itemName}</strong>
-                  <small>{item.category}</small>
+                  <small>{item.archived ? "Archived item" : item.category}</small>
                 </td>
                 <td>
                   {item.metalType} {item.purity}
@@ -140,13 +177,26 @@ export function InventoryPage({ onNavigate }: InventoryPageProps) {
                 <td>{formatNumber(item.netWeight)} g</td>
                 <td>{formatCurrency(item.sellingPrice)}</td>
                 <td>
-                  <span className="status-pill">{item.status}</span>
+                  <span className={`status-pill ${item.archived ? "status-pill-muted" : ""}`}>
+                    {item.archived ? "ARCHIVED" : item.status}
+                  </span>
                 </td>
                 <td>{formatDateTime(item.updatedAt ?? item.createdAt)}</td>
                 <td className="row-actions">
-                  <Button variant="ghost" onClick={() => onNavigate(`/inventory/${item.id}/edit`)}>
-                    Edit
-                  </Button>
+                  {item.archived ? (
+                    <Button variant="secondary" onClick={() => restoreItem(item)}>
+                      Restore
+                    </Button>
+                  ) : (
+                    <>
+                      <Button variant="ghost" onClick={() => onNavigate(`/inventory/${item.id}/edit`)}>
+                        Edit
+                      </Button>
+                      <Button variant="danger" onClick={() => archiveItem(item)}>
+                        Archive
+                      </Button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}

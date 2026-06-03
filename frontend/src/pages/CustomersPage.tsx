@@ -19,17 +19,20 @@ export function CustomersPage({ onNavigate }: CustomersPageProps) {
   const [customersPage, setCustomersPage] = useState(() => emptyPage<Customer>(createPageQuery("createdAt")));
   const [pageQuery, setPageQuery] = useState(() => createPageQuery("createdAt"));
   const [keyword, setKeyword] = useState("");
+  const [includeArchived, setIncludeArchived] = useState("false");
+  const [refreshKey, setRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     setLoading(true);
+    setError("");
     api
-      .customersPage({ keyword, ...toPageParams(pageQuery) })
+      .customersPage({ keyword, includeArchived, ...toPageParams(pageQuery) })
       .then(setCustomersPage)
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [keyword, pageQuery]);
+  }, [keyword, includeArchived, pageQuery, refreshKey]);
 
   function updateKeyword(value: string) {
     setKeyword(value);
@@ -42,6 +45,34 @@ export function CustomersPage({ onNavigate }: CustomersPageProps) {
       page: field === "page" ? Number(value) : 0,
       [field]: value
     }));
+  }
+
+  function updateArchiveFilter(value: string) {
+    setIncludeArchived(value);
+    setPageQuery((current) => resetPage(current));
+  }
+
+  async function archiveCustomer(customer: Customer) {
+    if (!window.confirm(`Archive ${customer.fullName}?`)) {
+      return;
+    }
+    try {
+      setError("");
+      await api.archiveCustomer(customer.id);
+      setRefreshKey((current) => current + 1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to archive customer");
+    }
+  }
+
+  async function restoreCustomer(customer: Customer) {
+    try {
+      setError("");
+      await api.restoreCustomer(customer.id);
+      setRefreshKey((current) => current + 1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to restore customer");
+    }
   }
 
   return (
@@ -73,6 +104,12 @@ export function CustomersPage({ onNavigate }: CustomersPageProps) {
               <option value="ASC">Ascending</option>
             </SelectInput>
           </Field>
+          <Field label="Archived">
+            <SelectInput value={includeArchived} onChange={(event) => updateArchiveFilter(event.target.value)}>
+              <option value="false">Active only</option>
+              <option value="true">Include archived</option>
+            </SelectInput>
+          </Field>
         </div>
       </Card>
 
@@ -90,16 +127,27 @@ export function CustomersPage({ onNavigate }: CustomersPageProps) {
               <tr key={customer.id}>
                 <td>
                   <strong>{customer.fullName}</strong>
-                  <small>{customer.notes}</small>
+                  <small>{customer.archived ? "Archived customer" : customer.notes}</small>
                 </td>
                 <td>{customer.phoneNumber}</td>
                 <td>{customer.email || "Not set"}</td>
                 <td>{[customer.city, customer.state].filter(Boolean).join(", ") || "Not set"}</td>
                 <td>{formatDateTime(customer.createdAt)}</td>
                 <td className="row-actions">
-                  <Button variant="ghost" onClick={() => onNavigate(`/customers/${customer.id}/edit`)}>
-                    Edit
-                  </Button>
+                  {customer.archived ? (
+                    <Button variant="secondary" onClick={() => restoreCustomer(customer)}>
+                      Restore
+                    </Button>
+                  ) : (
+                    <>
+                      <Button variant="ghost" onClick={() => onNavigate(`/customers/${customer.id}/edit`)}>
+                        Edit
+                      </Button>
+                      <Button variant="danger" onClick={() => archiveCustomer(customer)}>
+                        Archive
+                      </Button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}

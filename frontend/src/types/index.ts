@@ -107,6 +107,8 @@ export interface JewelleryItem {
   purchaseCost: number;
   sellingPrice: number;
   status: ItemStatus;
+  archived: boolean;
+  archivedAt?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -138,6 +140,8 @@ export interface Customer {
   state?: string;
   postalCode?: string;
   notes?: string;
+  archived: boolean;
+  archivedAt?: string;
   createdAt?: string;
   updatedAt?: string;
 }

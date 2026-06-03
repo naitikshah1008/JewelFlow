@@ -48,6 +48,8 @@ export const api = {
     apiRequest<JewelleryItem>("/api/items", { method: "POST", body: JSON.stringify(body) }),
   updateItem: (id: number, body: JewelleryItemRequest) =>
     apiRequest<JewelleryItem>(`/api/items/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  archiveItem: (id: number) => apiRequest<void>(`/api/items/${id}`, { method: "DELETE" }),
+  restoreItem: (id: number) => apiRequest<JewelleryItem>(`/api/items/${id}/restore`, { method: "POST" }),
 
   customers: (keyword?: string) => apiRequest<Customer[]>("/api/customers", {}, { keyword }),
   customersPage: (params?: Record<string, string | number>) =>
@@ -57,6 +59,8 @@ export const api = {
     apiRequest<Customer>("/api/customers", { method: "POST", body: JSON.stringify(body) }),
   updateCustomer: (id: number, body: CustomerRequest) =>
     apiRequest<Customer>(`/api/customers/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  archiveCustomer: (id: number) => apiRequest<void>(`/api/customers/${id}`, { method: "DELETE" }),
+  restoreCustomer: (id: number) => apiRequest<Customer>(`/api/customers/${id}/restore`, { method: "POST" }),
 
   goldRates: (params?: Record<string, string>) => apiRequest<GoldRate[]>("/api/gold-rates", {}, params),
   goldRatesPage: (params?: Record<string, string | number>) =>

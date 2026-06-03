@@ -420,6 +420,9 @@ td small {
 }
 
 .row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
   width: 1%;
   white-space: nowrap;
 }
@@ -434,6 +437,11 @@ td small {
   color: #244236;
   font-size: 12px;
   font-weight: 800;
+}
+
+.status-pill-muted {
+  background: #f1f1ee;
+  color: #69716c;
 }
 
 .alert {
