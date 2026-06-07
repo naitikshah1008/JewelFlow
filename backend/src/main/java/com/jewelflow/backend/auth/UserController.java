@@ -34,6 +34,11 @@ public class UserController {
         return userManagementService.createUser(request);
     }
 
+    @PostMapping("/invites")
+    public UserInviteResponse createInvite(@Valid @RequestBody CreateUserInviteRequest request) {
+        return userManagementService.createInvite(request);
+    }
+
     @PutMapping("/{id}")
     public UserResponse updateUser(@PathVariable Long id, @Valid @RequestBody UpdateUserRequest request) {
         return userManagementService.updateUser(id, request);

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final UserManagementService userManagementService;
 
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
@@ -25,6 +26,11 @@ public class AuthController {
     @PostMapping("/logout")
     public void logout(@Valid @RequestBody LogoutRequest request) {
         authService.logout(request);
+    }
+
+    @PostMapping("/invites/accept")
+    public UserResponse acceptInvite(@Valid @RequestBody AcceptUserInviteRequest request) {
+        return userManagementService.acceptInvite(request);
     }
 
     @GetMapping("/me")
