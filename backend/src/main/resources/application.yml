@@ -27,6 +27,8 @@ jewelflow:
       expiration-minutes: ${JWT_EXPIRATION_MINUTES:480}
     refresh-token:
       expiration-days: ${JWT_REFRESH_EXPIRATION_DAYS:14}
+    user-invite:
+      expiration-days: ${JEWELFLOW_USER_INVITE_EXPIRATION_DAYS:7}
     bootstrap-admin:
       username: ${JEWELFLOW_ADMIN_USERNAME:admin}
       password: ${JEWELFLOW_ADMIN_PASSWORD:AdminDemo123!}
