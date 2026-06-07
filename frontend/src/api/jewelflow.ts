@@ -1,5 +1,6 @@
 import { apiRequest } from "./client";
 import type {
+  AcceptUserInviteRequest,
   Customer,
   CustomerRequest,
   CurrentUser,
@@ -20,7 +21,9 @@ import type {
   Sale,
   UpdateUserRequest,
   UserAccount,
-  CreateUserRequest
+  CreateUserRequest,
+  CreateUserInviteRequest,
+  UserInviteResponse
 } from "../types";
 
 export const api = {
@@ -38,6 +41,10 @@ export const api = {
     apiRequest<UserAccount>(`/api/users/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   resetUserPassword: (id: number, body: ResetPasswordRequest) =>
     apiRequest<UserAccount>(`/api/users/${id}/reset-password`, { method: "POST", body: JSON.stringify(body) }),
+  createUserInvite: (body: CreateUserInviteRequest) =>
+    apiRequest<UserInviteResponse>("/api/users/invites", { method: "POST", body: JSON.stringify(body) }),
+  acceptUserInvite: (body: AcceptUserInviteRequest) =>
+    apiRequest<UserAccount>("/api/auth/invites/accept", { method: "POST", body: JSON.stringify(body) }),
 
   dashboard: () => apiRequest<DashboardSummary>("/api/dashboard/summary"),
 

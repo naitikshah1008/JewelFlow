@@ -88,6 +88,23 @@ export interface ResetPasswordRequest {
   newPassword: string;
 }
 
+export interface CreateUserInviteRequest {
+  username: string;
+  role: UserRole;
+}
+
+export interface UserInviteResponse {
+  username: string;
+  role: UserRole;
+  token: string;
+  expiresAt: string;
+}
+
+export interface AcceptUserInviteRequest {
+  token: string;
+  password: string;
+}
+
 export interface JewelleryItem {
   id: number;
   itemName: string;

@@ -8,7 +8,7 @@ import { Field, SelectInput, TextInput } from "../components/FormControls";
 import { Loading } from "../components/Loading";
 import { PaginationControls } from "../components/PaginationControls";
 import { Table } from "../components/Table";
-import type { CreateUserRequest, UserAccount, UserRole } from "../types";
+import type { CreateUserInviteRequest, CreateUserRequest, UserAccount, UserInviteResponse, UserRole } from "../types";
 import { formatDateTime } from "../utils/format";
 import { createPageQuery, emptyPage, toPageParams } from "../utils/pagination";
 
@@ -23,9 +23,14 @@ export function UsersPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [resetPasswords, setResetPasswords] = useState<Record<number, string>>({});
+  const [inviteResult, setInviteResult] = useState<UserInviteResponse | null>(null);
   const [form, setForm] = useState<CreateUserRequest>({
     username: "",
     password: "",
+    role: "STAFF"
+  });
+  const [inviteForm, setInviteForm] = useState<CreateUserInviteRequest>({
+    username: "",
     role: "STAFF"
   });
 
@@ -42,6 +47,10 @@ export function UsersPage() {
 
   function setFormValue<K extends keyof CreateUserRequest>(field: K, value: CreateUserRequest[K]) {
     setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function setInviteFormValue<K extends keyof CreateUserInviteRequest>(field: K, value: CreateUserInviteRequest[K]) {
+    setInviteForm((current) => ({ ...current, [field]: value }));
   }
 
   function readError(err: unknown, fallback: string) {
@@ -82,6 +91,43 @@ export function UsersPage() {
       setError(readError(err, "Unable to create user."));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleCreateInvite(event: FormEvent) {
+    event.preventDefault();
+    setError("");
+    setSuccess("");
+    setInviteResult(null);
+    if (!inviteForm.username.trim()) {
+      setError("Invite username is required.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const invite = await api.createUserInvite({ ...inviteForm, username: inviteForm.username.trim() });
+      setInviteResult(invite);
+      setInviteForm({ username: "", role: "STAFF" });
+      setSuccess(`Invite created for ${invite.username}.`);
+    } catch (err) {
+      setError(readError(err, "Unable to create invite."));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function inviteLink(invite: UserInviteResponse) {
+    return `${window.location.origin}/accept-invite?token=${encodeURIComponent(invite.token)}`;
+  }
+
+  async function copyInviteLink(invite: UserInviteResponse) {
+    const link = inviteLink(invite);
+    try {
+      await navigator.clipboard.writeText(link);
+      setSuccess("Invite link copied.");
+    } catch {
+      setSuccess(link);
     }
   }
 
@@ -175,6 +221,45 @@ export function UsersPage() {
               {saving ? "Creating" : "Create User"}
             </Button>
           </div>
+        </form>
+      </Card>
+
+      <Card title="Invite User">
+        <form className="form-grid compact" onSubmit={handleCreateInvite}>
+          <Field label="Username">
+            <TextInput
+              value={inviteForm.username}
+              onChange={(event) => setInviteFormValue("username", event.target.value)}
+              autoComplete="off"
+            />
+          </Field>
+          <Field label="Role">
+            <SelectInput
+              value={inviteForm.role}
+              onChange={(event) => setInviteFormValue("role", event.target.value as UserRole)}
+            >
+              {roleOptions.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
+            </SelectInput>
+          </Field>
+          <div className="form-actions">
+            <Button type="submit" disabled={saving}>
+              {saving ? "Creating Invite" : "Create Invite"}
+            </Button>
+          </div>
+          {inviteResult && (
+            <div className="invite-result">
+              <strong>{inviteResult.username}</strong>
+              <small>Expires {formatDateTime(inviteResult.expiresAt)}</small>
+              <TextInput value={inviteLink(inviteResult)} readOnly />
+              <Button type="button" variant="secondary" onClick={() => copyInviteLink(inviteResult)}>
+                Copy Link
+              </Button>
+            </div>
+          )}
         </form>
       </Card>
 

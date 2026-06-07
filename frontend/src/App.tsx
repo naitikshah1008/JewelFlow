@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "./api/jewelflow";
 import { Layout, type NavItem } from "./components/Layout";
+import { AcceptInvitePage } from "./pages/AcceptInvitePage";
 import { CreateInvoicePage } from "./pages/CreateInvoicePage";
 import { CustomerFormPage } from "./pages/CustomerFormPage";
 import { CustomersPage } from "./pages/CustomersPage";
@@ -42,6 +43,7 @@ function getPathTitle(path: string): string {
   if (path.startsWith("/invoices")) return "Invoices / Orders";
   if (path.startsWith("/sales")) return "Sales";
   if (path.startsWith("/users")) return "Users";
+  if (path.startsWith("/accept-invite")) return "Accept Invite";
   return "Not Found";
 }
 
@@ -73,7 +75,7 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (!session && path !== "/login") {
+    if (!session && path !== "/login" && !path.startsWith("/accept-invite")) {
       window.history.replaceState({}, "", "/login");
       setPath("/login");
     }
@@ -104,6 +106,10 @@ export function App() {
       setSession(null);
       navigate("/login");
     }
+  }
+
+  if (!session && path.startsWith("/accept-invite")) {
+    return <AcceptInvitePage onNavigate={navigate} />;
   }
 
   if (!session) {

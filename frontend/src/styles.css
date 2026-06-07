@@ -304,6 +304,20 @@ textarea.control {
   align-items: center;
 }
 
+.invite-result {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #d8e1db;
+  border-radius: 8px;
+  background: #f8faf8;
+}
+
+.invite-result small {
+  color: #65736b;
+}
+
 .checkbox-field {
   display: inline-flex;
   align-items: center;
