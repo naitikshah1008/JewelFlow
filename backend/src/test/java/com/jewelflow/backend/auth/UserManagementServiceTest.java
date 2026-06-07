@@ -16,9 +16,11 @@ import static org.mockito.Mockito.when;
 class UserManagementServiceTest {
 
     private final AppUserRepository appUserRepository = mock(AppUserRepository.class);
+    private final UserInviteRepository userInviteRepository = mock(UserInviteRepository.class);
     private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
     private final UserManagementService userManagementService = new UserManagementService(
             appUserRepository,
+            userInviteRepository,
             passwordEncoder
     );
 
@@ -83,5 +85,74 @@ class UserManagementServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("At least one enabled admin");
         verify(appUserRepository, never()).save(any(AppUser.class));
+    }
+
+    @Test
+    void createInviteRejectsExistingUsername() {
+        CreateUserInviteRequest request = new CreateUserInviteRequest();
+        request.setUsername(" staff ");
+        request.setRole(UserRole.STAFF);
+        when(appUserRepository.existsByUsernameIgnoreCase("staff")).thenReturn(true);
+
+        assertThatThrownBy(() -> userManagementService.createInvite(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("User already exists");
+        verify(userInviteRepository, never()).save(any(UserInvite.class));
+    }
+
+    @Test
+    void createInviteReturnsRawTokenAndStoresHash() {
+        CreateUserInviteRequest request = new CreateUserInviteRequest();
+        request.setUsername(" associate ");
+        request.setRole(UserRole.STAFF);
+        when(appUserRepository.existsByUsernameIgnoreCase("associate")).thenReturn(false);
+        when(userInviteRepository.findTopByUsernameIgnoreCaseAndAcceptedAtIsNullOrderByCreatedAtDesc("associate"))
+                .thenReturn(Optional.empty());
+        when(userInviteRepository.save(any(UserInvite.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UserInviteResponse response = userManagementService.createInvite(request);
+
+        assertThat(response.getUsername()).isEqualTo("associate");
+        assertThat(response.getToken()).isNotBlank();
+        assertThat(response.getExpiresAt()).isNotNull();
+        verify(userInviteRepository).save(org.mockito.ArgumentMatchers.argThat(invite ->
+                invite.getTokenHash() != null
+                        && !invite.getTokenHash().equals(response.getToken())
+                        && invite.getRole() == UserRole.STAFF
+        ));
+    }
+
+    @Test
+    void acceptInviteCreatesEnabledUserAndMarksInviteAccepted() {
+        AcceptUserInviteRequest request = new AcceptUserInviteRequest();
+        request.setToken("raw-token");
+        request.setPassword("Welcome123!");
+        UserInvite invite = UserInvite.builder()
+                .id(1L)
+                .username("associate")
+                .tokenHash(userManagementService.hashToken("raw-token"))
+                .role(UserRole.STAFF)
+                .expiresAt(java.time.LocalDateTime.now().plusDays(1))
+                .build();
+        AppUser savedUser = AppUser.builder()
+                .id(2L)
+                .username("associate")
+                .passwordHash("hashed-password")
+                .role(UserRole.STAFF)
+                .enabled(true)
+                .build();
+
+        when(userInviteRepository.findByTokenHashAndAcceptedAtIsNull(userManagementService.hashToken("raw-token")))
+                .thenReturn(Optional.of(invite));
+        when(appUserRepository.existsByUsernameIgnoreCase("associate")).thenReturn(false);
+        when(passwordEncoder.encode("Welcome123!")).thenReturn("hashed-password");
+        when(appUserRepository.save(any(AppUser.class))).thenReturn(savedUser);
+
+        UserResponse response = userManagementService.acceptInvite(request);
+
+        assertThat(response.getUsername()).isEqualTo("associate");
+        assertThat(response.isEnabled()).isTrue();
+        assertThat(invite.getAcceptedAt()).isNotNull();
+        verify(userInviteRepository).save(invite);
     }
 }
