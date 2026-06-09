@@ -100,7 +100,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
         </Card>
       </div>
 
-      <Card title="Recent Sales">
+      <Card title="Recent Legacy Sales">
         <Table
           columns={["Sale", "Customer", "Item", "Amount", "Status", "Date"]}
           empty={summary.recentSales.length === 0}

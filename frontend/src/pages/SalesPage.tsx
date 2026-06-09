@@ -45,7 +45,12 @@ export function SalesPage() {
 
   return (
     <div className="page-stack">
-      <Card title="Sales">
+      <Alert
+        type="info"
+        title="Legacy records"
+        message="Invoices / Orders is the primary billing flow. This page keeps older sales records searchable for reference."
+      />
+      <Card title="Legacy Sales">
         <div className="filters-grid">
           <Field label="Search">
             <TextInput
@@ -74,7 +79,7 @@ export function SalesPage() {
           <Field label="Sort By">
             <SelectInput value={pageQuery.sortBy} onChange={(event) => updatePageQuery("sortBy", event.target.value)}>
               <option value="saleDate">Sale Date</option>
-              <option value="invoiceNumber">Sale Number</option>
+              <option value="invoiceNumber">Legacy Number</option>
               <option value="customerName">Customer</option>
               <option value="finalAmount">Amount</option>
               <option value="paymentStatus">Payment</option>
@@ -95,9 +100,9 @@ export function SalesPage() {
       ) : (
         <Card>
           <Table
-            columns={["Sale", "Customer", "Item", "Amount", "Payment", "Date"]}
+            columns={["Legacy Sale", "Customer", "Item", "Amount", "Payment", "Date"]}
             empty={salesPage.content.length === 0}
-            emptyTitle="No sales found"
+            emptyTitle="No legacy sales found"
           >
             {salesPage.content.map((sale) => (
               <tr key={sale.id}>

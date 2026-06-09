@@ -25,7 +25,7 @@ const navItems: NavItem[] = [
   { path: "/gold-rates", label: "Gold Rates" },
   { path: "/pricing", label: "Pricing" },
   { path: "/invoices", label: "Invoices" },
-  { path: "/sales", label: "Sales" },
+  { path: "/sales", label: "Legacy Sales" },
   { path: "/users", label: "Users", adminOnly: true }
 ];
 
@@ -41,7 +41,7 @@ function getPathTitle(path: string): string {
   if (path.startsWith("/pricing")) return "Pricing Calculator";
   if (path.startsWith("/invoices/new")) return "Create Invoice";
   if (path.startsWith("/invoices")) return "Invoices / Orders";
-  if (path.startsWith("/sales")) return "Sales";
+  if (path.startsWith("/sales")) return "Legacy Sales";
   if (path.startsWith("/users")) return "Users";
   if (path.startsWith("/accept-invite")) return "Accept Invite";
   return "Not Found";
